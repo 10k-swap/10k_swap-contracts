@@ -1,0 +1,21 @@
+node_modules
+.vscode
+.env
+yarn-error.log
+
+#Hardhat files
+cache
+artifacts
+
+#Python artifacts
+__pycache__
+.pytest_cache
+
+#Starknet plugin
+starknet-artifacts
+
+# OSX
+.DS_Store
+
+# venv
+cairo_venv
