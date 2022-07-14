@@ -11,7 +11,7 @@ const config: HardhatUserConfig = {
   starknet: {
     dockerizedVersion: "0.9.0", // alternatively choose one of the two venv options below
     // uses (my-venv) defined by `python -m venv path/to/my-venv`
-    // venv: "path/to/my-venv",
+    venv: "./cairo_venv",
 
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     // venv: "active",
