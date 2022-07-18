@@ -1,13 +1,24 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.math import assert_nn
+from starkware.cairo.common.math_cmp import is_le_felt
+from starkware.cairo.common.math import assert_nn, assert_not_equal
 from starkware.starknet.common.syscalls import get_caller_address
 
-# A map from user (represented by account contract address)
-# to their balance.
 @storage_var
-func balance(user : felt) -> (res : felt):
+func _feeTo() -> (feeTo : felt):
+end
+
+@storage_var
+func _feeToSetter() -> (feeToSetter : felt):
+end
+
+@storage_var
+func _getPair(token0 : felt, token1 : felt) -> (pair : felt):
+end
+
+@storage_var
+func _allPairs() -> (pair : felt):
 end
 
 # An event emitted whenever increase_balance() is called.
@@ -16,32 +27,43 @@ end
 func increase_balance_called(current_balance : felt, amount : felt):
 end
 
-# Increases the balance of the user by the given amount.
 @external
-func increase_balance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        amount : felt):
-    # Verify that the amount is positive.
-    with_attr error_message("Amount must be positive."):
-        assert_nn(amount)
+func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    tokenA : felt, tokenB : felt
+) -> (pair : felt):
+    with_attr error_message("l0kSwap: IDENTICAL_ADDRESSES"):
+        assert_not_equal(tokenA, tokenB)
     end
 
-    # Obtain the address of the account contract.
-    let (user) = get_caller_address()
+    let (comp) = is_le_felt(tokenA, tokenB)
 
-    # Read and update its balance.
-    let (res) = balance.read(user=user)
-    balance.write(user, res + amount)
+    if comp == 1:
+        _feeTo.write(123)
+        return (pair=1)
+    end
 
-    # Emit the event.
-    increase_balance_called.emit(current_balance=res, amount=amount)
-
-    return ()
+    return (pair=0)
 end
 
-# Returns the balance of the given user.
 @view
-func get_balance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-        user : felt) -> (res : felt):
-    let (res) = balance.read(user=user)
-    return (res)
+func feeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (feeTo : felt):
+    let (value) = _feeTo.read()
+    return (feeTo=value)
+end
+
+@view
+func feeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    feeToSetter : felt
+):
+    let (value) = _feeToSetter.read()
+    return (feeToSetter=value)
+end
+
+
+@view
+func feeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    feeToSetter : felt
+):
+    let (value) = _feeToSetter.read()
+    return (feeToSetter=value)
 end
