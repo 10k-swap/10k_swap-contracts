@@ -2,7 +2,7 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math_cmp import is_le_felt
-from starkware.cairo.common.math import assert_nn, assert_not_equal
+from starkware.cairo.common.math import assert_nn, assert_not_equal,assert_not_zero
 from starkware.starknet.common.syscalls import get_caller_address
 
 @storage_var
@@ -48,10 +48,18 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     end
 
     let (comp) = is_le_felt(tokenA, tokenB)
-
+    let (token0, token1) = (tokenB, tokenA)
     if comp == 1:
-        _feeTo.write(123)
-        return (pair=1)
+        (token0, token1) = (tokenA, tokenB)
+    end
+    with_attr error_message("10kSwap: ZERO_ADDRESS"):
+        assert_not_zero(token0)
+    end
+
+    require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS');
+
+    with_attr error_message("10kSwap: PAIR_EXISTS"):
+        let (pair) = getPair(token0, token1)
     end
 
     return (pair=0)
