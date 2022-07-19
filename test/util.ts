@@ -1,6 +1,9 @@
 import { expect } from "chai";
 import { command } from "execa";
+import { starknet } from "hardhat";
+import { ArgentAccount, OpenZeppelinAccount } from "hardhat/types";
 import { toFelt } from "starknet/dist/utils/number";
+import { MAX_FEE } from "./constants";
 
 export function expectFeeEstimationStructure(fee: any) {
   console.log("Estimated fee:", fee);
@@ -51,4 +54,33 @@ export function stringToFlet(str: string) {
 export async function hardhatCompile(contractPath: string) {
   const { stdout } = await command(`hardhat starknet-compile ${contractPath}`);
   process.stdout.write(stdout);
+}
+
+/**
+ * Get openZeppelin account from env
+ * @returns
+ */
+export async function envAccountOZ(index: number) {
+  const suffix = index > 0 ? `_${index}` : "";
+
+  const address = ensureEnvVar(`OZ_ACCOUNT_ADDRESS${suffix}`);
+  const privateKey = ensureEnvVar(`OZ_ACCOUNT_PRIVATE_KEY${suffix}`);
+
+  let account: OpenZeppelinAccount;
+  try {
+    account = <OpenZeppelinAccount>(
+      await starknet.getAccountFromAddress(address, privateKey, "OpenZeppelin")
+    );
+  } catch (err) {
+    account = <OpenZeppelinAccount>await starknet.deployAccount(
+      "OpenZeppelin",
+      {
+        privateKey,
+        salt: privateKey,
+      }
+    );
+    console.log("Deploy account:", account.address);
+  }
+
+  return account;
 }

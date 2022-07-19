@@ -18,7 +18,11 @@ func _getPair(token0 : felt, token1 : felt) -> (pair : felt):
 end
 
 @storage_var
-func _allPairs() -> (pair : felt):
+func _allPairs(index : felt) -> (pair : felt):
+end
+
+@storage_var
+func _allPairsLength() -> (length : felt):
 end
 
 # An event emitted whenever increase_balance() is called.
@@ -27,11 +31,19 @@ end
 func increase_balance_called(current_balance : felt, amount : felt):
 end
 
+@constructor
+func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    feeToSetter : felt
+):
+    _feeToSetter.write(feeToSetter)
+    return ()
+end
+
 @external
 func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     tokenA : felt, tokenB : felt
 ) -> (pair : felt):
-    with_attr error_message("l0kSwap: IDENTICAL_ADDRESSES"):
+    with_attr error_message("10kSwap: IDENTICAL_ADDRESSES"):
         assert_not_equal(tokenA, tokenB)
     end
 
@@ -43,6 +55,23 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     end
 
     return (pair=0)
+end
+
+@external
+func setFeeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(feeTo : felt) -> (
+    ):
+    onlyFeeToSetter()
+    _feeTo.write(feeTo)
+    return ()
+end
+
+@external
+func setFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    feeToSetter : felt
+) -> ():
+    onlyFeeToSetter()
+    _feeToSetter.write(feeToSetter)
+    return ()
 end
 
 @view
@@ -59,11 +88,35 @@ func feeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return (feeToSetter=value)
 end
 
+@view
+func getPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    token0 : felt, token1 : felt
+) -> (pair : felt):
+    let (value) = _getPair.read(token0, token1)
+    return (pair=value)
+end
 
 @view
-func feeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    feeToSetter : felt
+func allPairs{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(index : felt) -> (
+    pair : felt
 ):
-    let (value) = _feeToSetter.read()
-    return (feeToSetter=value)
+    let (value) = _allPairs.read(index)
+    return (pair=value)
+end
+
+@view
+func allPairsLength{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    length : felt
+):
+    let (value) = _allPairsLength.read()
+    return (length=value)
+end
+
+func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (caller) = get_caller_address()
+    let (feeToSetter) = _feeToSetter.read()
+    with_attr error_message("10kSwap: FORBIDDEN"):
+        assert feeToSetter = caller
+    end
+    return ()
 end
