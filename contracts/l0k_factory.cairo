@@ -2,8 +2,20 @@
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math_cmp import is_le_felt
-from starkware.cairo.common.math import assert_nn, assert_not_equal,assert_not_zero
+from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
 from starkware.starknet.common.syscalls import get_caller_address
+
+#
+# Events
+#
+
+@event
+func PairCreated(token0 : felt, token1 : felt, pair : felt, index : felt):
+end
+
+#
+# Storage
+#
 
 @storage_var
 func _feeTo() -> (feeTo : felt):
@@ -25,11 +37,9 @@ end
 func _allPairsLength() -> (length : felt):
 end
 
-# An event emitted whenever increase_balance() is called.
-# current_balance is the balance before it was increased.
-@event
-func increase_balance_called(current_balance : felt, amount : felt):
-end
+#
+# Constructor
+#
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -39,30 +49,47 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
     return ()
 end
 
+#
+# Public functions
+#
+
 @external
 func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     tokenA : felt, tokenB : felt
 ) -> (pair : felt):
-    with_attr error_message("10kSwap: IDENTICAL_ADDRESSES"):
+    alloc_locals
+
+    with_attr error_message("10kSwap: IA"):
         assert_not_equal(tokenA, tokenB)
     end
 
     let (comp) = is_le_felt(tokenA, tokenB)
-    let (token0, token1) = (tokenB, tokenA)
+    let token0 = tokenB
+    let token1 = tokenA
     if comp == 1:
-        (token0, token1) = (tokenA, tokenB)
+        token0 = tokenA
+        token1 = tokenB
     end
-    with_attr error_message("10kSwap: ZERO_ADDRESS"):
+    with_attr error_message("10kSwap: ZA"):
         assert_not_zero(token0)
     end
 
-    require(getPair[token0][token1] == address(0), 'UniswapV2: PAIR_EXISTS');
-
-    with_attr error_message("10kSwap: PAIR_EXISTS"):
+    with_attr error_message("10kSwap: PE"):
         let (pair) = getPair(token0, token1)
+        assert pair = 0
     end
 
-    return (pair=0)
+    const newPair = 1001
+
+    _getPair.write(token0, token1, newPair)
+    _getPair.write(token1, token0, newPair)
+    let (length) = _allPairsLength.read()
+    _allPairs.write(newPair, length)
+    _allPairsLength.write(length + 1)
+
+    PairCreated.emit(token0, token1, newPair, length)
+
+    return (newPair)
 end
 
 @external
@@ -120,11 +147,16 @@ func allPairsLength{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
     return (length=value)
 end
 
+#
+# Internal
+#
+
 func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller) = get_caller_address()
     let (feeToSetter) = _feeToSetter.read()
-    with_attr error_message("10kSwap: FORBIDDEN"):
+    with_attr error_message("10kSwap: F"):
         assert feeToSetter = caller
     end
     return ()
 end
+
