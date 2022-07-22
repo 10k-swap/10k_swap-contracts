@@ -43,7 +43,7 @@ export function expectAddressEquality(actual: string, expected: string) {
  * @param str
  * @returns
  */
-export function stringToFlet(str: string) {
+export function stringToFelt(str: string) {
   return toFelt("0x" + Buffer.from(str).toString("hex"));
 }
 

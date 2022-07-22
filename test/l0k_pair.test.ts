@@ -10,12 +10,12 @@ describe("Amm sample", function () {
   let accountOZ1: OpenZeppelinAccount;
 
   before(async function () {
-    await hardhatCompile("contracts/l0k_factory.cairo");
+    await hardhatCompile("contracts/l0k_pair.cairo");
 
     accountOZ0 = await envAccountOZ(0);
     accountOZ1 = await envAccountOZ(1);
 
-    const contractFactory = await starknet.getContractFactory("l0k_factory");
+    const contractFactory = await starknet.getContractFactory("l0k_pair");
     l0kFactoryContract = await contractFactory.deploy({
       feeToSetter: accountOZ0.address,
     });

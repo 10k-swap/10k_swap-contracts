@@ -50,64 +50,8 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 end
 
 #
-# Public functions
+# Getters
 #
-
-@external
-func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    tokenA : felt, tokenB : felt
-) -> (pair : felt):
-    alloc_locals
-
-    with_attr error_message("10kSwap: IA"):
-        assert_not_equal(tokenA, tokenB)
-    end
-
-    let (comp) = is_le_felt(tokenA, tokenB)
-    let token0 = tokenB
-    let token1 = tokenA
-    if comp == 1:
-        token0 = tokenA
-        token1 = tokenB
-    end
-    with_attr error_message("10kSwap: ZA"):
-        assert_not_zero(token0)
-    end
-
-    with_attr error_message("10kSwap: PE"):
-        let (pair) = getPair(token0, token1)
-        assert pair = 0
-    end
-
-    const newPair = 1001
-
-    _getPair.write(token0, token1, newPair)
-    _getPair.write(token1, token0, newPair)
-    let (length) = _allPairsLength.read()
-    _allPairs.write(newPair, length)
-    _allPairsLength.write(length + 1)
-
-    PairCreated.emit(token0, token1, newPair, length)
-
-    return (newPair)
-end
-
-@external
-func setFeeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(feeTo : felt) -> (
-    ):
-    onlyFeeToSetter()
-    _feeTo.write(feeTo)
-    return ()
-end
-
-@external
-func setFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    feeToSetter : felt
-) -> ():
-    onlyFeeToSetter()
-    _feeToSetter.write(feeToSetter)
-    return ()
-end
 
 @view
 func feeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (feeTo : felt):
@@ -148,6 +92,69 @@ func allPairsLength{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_chec
 end
 
 #
+# Externals
+#
+
+@external
+func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    tokenA : felt, tokenB : felt
+) -> (pair : felt):
+    alloc_locals
+
+    with_attr error_message("10kSwap: IA"):
+        assert_not_equal(tokenA, tokenB)
+    end
+
+    let (comp) = is_le_felt(tokenA, tokenB)
+    local token0 : felt
+    local token1 : felt
+    if comp == 1:
+        token0 = tokenA
+        token1 = tokenB
+    else:
+        token0 = tokenB
+        token1 = tokenA
+    end
+    with_attr error_message("10kSwap: ZA"):
+        assert_not_zero(token0)
+    end
+
+    with_attr error_message("10kSwap: PE"):
+        let (pair) = getPair(token0, token1)
+        assert pair = 0
+    end
+
+    const newPair = 1001
+
+    _getPair.write(token0, token1, newPair)
+    _getPair.write(token1, token0, newPair)
+    let (length) = _allPairsLength.read()
+    _allPairs.write(newPair, length)
+    _allPairsLength.write(length + 1)
+
+    PairCreated.emit(token0, token1, newPair, length)
+
+    return (newPair)
+end
+
+@external
+func setFeeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(feeTo : felt) -> (
+    ):
+    onlyFeeToSetter()
+    _feeTo.write(feeTo)
+    return ()
+end
+
+@external
+func setFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    feeToSetter : felt
+) -> ():
+    onlyFeeToSetter()
+    _feeToSetter.write(feeToSetter)
+    return ()
+end
+
+#
 # Internal
 #
 
@@ -159,4 +166,3 @@ func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     end
     return ()
 end
-
