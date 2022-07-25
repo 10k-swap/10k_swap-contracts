@@ -17,6 +17,7 @@ describe("Amm factory", function () {
   let token0: string;
   let token1: string;
   let pair0Address: string;
+  let pairLength = 0;
 
   before(async function () {
     await hardhatCompile("contracts/l0k_factory.cairo");
@@ -88,6 +89,23 @@ describe("Amm factory", function () {
     });
 
     expect(BigInt(pair)).to.equal(BigInt(pair0Address));
+
+    pairLength += 1;
+  });
+
+  it("Test getPair & allPairs & allPairsLength", async function () {
+    const { pair } = await l0kFactoryContract.call("getPair", {
+      token0,
+      token1,
+    });
+    const { pair: allPairs0 } = await l0kFactoryContract.call("allPairs", {
+      index: pairLength - 1,
+    });
+    const { length } = await l0kFactoryContract.call("allPairsLength");
+
+    expect(BigInt(pair)).to.equal(BigInt(pair0Address));
+    expect(BigInt(allPairs0)).to.equal(BigInt(pair0Address));
+    expect(BigInt(length)).to.equal(BigInt(pairLength));
   });
 
   it("Test pair factory & token0 & token1", async function () {

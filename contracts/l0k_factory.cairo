@@ -151,7 +151,7 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 
     _getPair.write(token0, token1, newPair)
     _getPair.write(token1, token0, newPair)
-    _allPairs.write(newPair, length)
+    _allPairs.write(length, newPair)
     let newLength = length + 1
     _allPairsLength.write(newLength)
 
