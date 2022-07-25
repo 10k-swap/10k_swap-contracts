@@ -105,18 +105,27 @@ end
 # Pair === start ===
 #
 
-const _MINIMUM_LIQUIDITY = Uint256(10 ** 3, 0)
+#
+# Constants
+#
+
+# Cairo supports defining constant expressions (only integers(felt))
+# https://www.cairo-lang.org/docs/how_cairo_works/consts.html
+const _MINIMUM_LIQUIDITY = 10 ** 3
 
 #
 # Events
 #
 
+@event
 func Mint(sender : Uint256, amount0 : Uint256, amount1 : Uint256):
 end
 
+@event
 func Burn(sender : felt, amount0 : Uint256, amount1 : Uint256, to : felt):
 end
 
+@event
 func Swap(
     sender : felt,
     amount0In : Uint256,
@@ -127,16 +136,16 @@ func Swap(
 ):
 end
 
-# Todo
-# func Sync(uint112 reserve0, uint112 reserve1):
-# end
+@event
+func Sync(reserve0 : felt, reserve1 : felt):
+end
 
 #
 # Storage
 #
 
 @storage_var
-func _factory() -> (feeTo : felt):
+func _factory() -> (factory : felt):
 end
 
 @storage_var
@@ -147,7 +156,7 @@ end
 func _token1() -> (token1 : felt):
 end
 
-# uses single storage slot, accessible via getReserves
+# Type: uint112
 @storage_var
 func _reserve0() -> (reserve0 : felt):
 end
@@ -178,10 +187,9 @@ end
 #
 
 @constructor
-func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    feeToSetter : felt
-):
-    _feeToSetter.write(feeToSetter)
+func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+    let (sender) = get_caller_address()
+    _factory.write(sender)
     return ()
 end
 
@@ -190,75 +198,96 @@ end
 #
 
 @view
-func MINIMUM_LIQUIDITY{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> ():
-    let (value) = _feeTo.read()
-    return (feeTo=value)
+func MINIMUM_LIQUIDITY{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    MINIMUM_LIQUIDITY : felt
+):
+    return (MINIMUM_LIQUIDITY=_MINIMUM_LIQUIDITY)
 end
 
 @view
-func feeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (feeTo : felt):
-    let (value) = _feeTo.read()
-    return (feeTo=value)
+func factory{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    factory : felt
+):
+    let (value) = _factory.read()
+    return (factory=value)
+end
+
+@view
+func token0{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (token0 : felt):
+    let (value) = _token0.read()
+    return (token0=value)
+end
+@view
+func token1{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (token1 : felt):
+    let (value) = _token1.read()
+    return (token1=value)
+end
+
+@view
+func blockTimestampLast{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    blockTimestampLast : felt
+):
+    let (value) = _blockTimestampLast.read()
+    return (blockTimestampLast=value)
+end
+
+@view
+func price0CumulativeLast{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    price0CumulativeLast : Uint256
+):
+    let (value) = _price0CumulativeLast.read()
+    return (price0CumulativeLast=value)
+end
+
+@view
+func price1CumulativeLast{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    price1CumulativeLast : Uint256
+):
+    let (value) = _price1CumulativeLast.read()
+    return (price1CumulativeLast=value)
+end
+
+@view
+func kLast{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    kLast : Uint256
+):
+    let (value) = _kLast.read()
+    return (kLast=value)
 end
 
 #
 # Externals
 #
 
+# called once by the factory at time of deployment
 @external
-func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    tokenA : felt, tokenB : felt
-) -> (pair : felt):
-    alloc_locals
-
-    with_attr error_message("10kSwap: IA"):
-        assert_not_equal(tokenA, tokenB)
+func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    token0 : felt, token1 : felt
+) -> ():
+    let (factory) = _factory.read()
+    let (sender) = get_caller_address()
+    with_attr error_message("10kSwap: FB"):
+        assert factory = sender
     end
 
-    let (comp) = is_le_felt(tokenA, tokenB)
-    local token0 : felt
-    local token1 : felt
-    if comp == 1:
-        token0 = tokenA
-        token1 = tokenB
-    else:
-        token0 = tokenB
-        token1 = tokenA
-    end
-    with_attr error_message("10kSwap: ZA"):
-        assert_not_zero(token0)
-    end
+    _token0.write(token0)
+    _token1.write(token1)
 
-    with_attr error_message("10kSwap: PE"):
-        let (pair) = getPair(token0, token1)
-        assert pair = 0
-    end
-
-    const newPair = 1001
-
-    _getPair.write(token0, token1, newPair)
-    _getPair.write(token1, token0, newPair)
-    let (length) = _allPairsLength.read()
-    _allPairs.write(newPair, length)
-    _allPairsLength.write(length + 1)
-
-    PairCreated.emit(token0, token1, newPair, length)
-
-    return (newPair)
+    return ()
 end
 
 #
 # Internal
 #
 
-func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    let (caller) = get_caller_address()
-    let (feeToSetter) = _feeToSetter.read()
-    with_attr error_message("10kSwap: F"):
-        assert feeToSetter = caller
-    end
-    return ()
-end
+# func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+#     let (caller) = get_caller_address()
+#     let (feeToSetter) = _feeToSetter.read()
+#     with_attr error_message("10kSwap: F"):
+#         assert feeToSetter = caller
+#     end
+#     return ()
+# end
 
 #
 # Pair === end ===

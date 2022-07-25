@@ -4,6 +4,15 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
 from starkware.starknet.common.syscalls import get_caller_address
+from starkware.starknet.common.syscalls import deploy
+
+from interfaces.Il0kPair import Il0kPair
+
+#
+# Constants
+#
+
+const _MINIMUM_LIQUIDITY = 10 ** 3
 
 #
 # Events
@@ -16,6 +25,10 @@ end
 #
 # Storage
 #
+
+@storage_var
+func _pairContractClassHash() -> (pairContractClassHash : felt):
+end
 
 @storage_var
 func _feeTo() -> (feeTo : felt):
@@ -43,8 +56,9 @@ end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    feeToSetter : felt
+    pairContractClassHash : felt, feeToSetter : felt
 ):
+    _pairContractClassHash.write(pairContractClassHash)
     _feeToSetter.write(feeToSetter)
     return ()
 end
@@ -124,15 +138,24 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         assert pair = 0
     end
 
-    const newPair = 1001
+    let (length) = _allPairsLength.read()
+    let (pairContractClassHash) = _pairContractClassHash.read()
+
+    let (newPair) = deploy(
+        class_hash=pairContractClassHash,
+        contract_address_salt=length,
+        constructor_calldata_size=0,
+        constructor_calldata=cast(new (), felt*),
+    )
+    Il0kPair.initialize(contract_address=newPair, token0=token0, token1=token1)
 
     _getPair.write(token0, token1, newPair)
     _getPair.write(token1, token0, newPair)
-    let (length) = _allPairsLength.read()
     _allPairs.write(newPair, length)
-    _allPairsLength.write(length + 1)
+    let newLength = length + 1
+    _allPairsLength.write(newLength)
 
-    PairCreated.emit(token0, token1, newPair, length)
+    PairCreated.emit(token0, token1, newPair, newLength)
 
     return (newPair)
 end
