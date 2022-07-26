@@ -2,7 +2,7 @@ import { expect } from "chai";
 import { starknet } from "hardhat";
 import { OpenZeppelinAccount, StarknetContract } from "hardhat/types/runtime";
 import { shortString } from "starknet";
-import { computeHashOnElements } from "starknet/dist/utils/hash";
+import { computeHashOnElements, pedersen } from "starknet/dist/utils/hash";
 import { MAX_FEE } from "./constants";
 import { envAccountOZ, hardhatCompile } from "./util";
 
@@ -62,23 +62,25 @@ describe("Amm factory", function () {
       { maxFee: MAX_FEE }
     );
     const receipt = await starknet.getTransactionReceipt(hash);
+    const event0 = receipt.events[0];
+    token0 = event0.data[0];
+    token1 = event0.data[1];
 
     // Compute pair contract address
     const CONTRACT_ADDRESS_PREFIX = shortString.encodeShortString(
       "STARKNET_CONTRACT_ADDRESS"
     );
+    const salt = pedersen([token0, token1]);
     const constructorCalldataHash = computeHashOnElements([]);
     pair0Address = computeHashOnElements([
       CONTRACT_ADDRESS_PREFIX,
       l0kFactoryContract.address,
-      0x0,
+      salt,
       pairContractClassHash,
       constructorCalldataHash,
     ]);
+    console.log("pair0Address:", pair0Address);
 
-    const event0 = receipt.events[0];
-    token0 = event0.data[0];
-    token1 = event0.data[1];
     expect(BigInt(token0)).to.equal(BigInt(TOKEN_B));
     expect(BigInt(token1)).to.equal(BigInt(TOKEN_A));
     expect(BigInt(event0.data[2])).to.equal(BigInt(pair0Address));

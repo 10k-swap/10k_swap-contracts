@@ -5,14 +5,9 @@ from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import deploy
+from starkware.cairo.common.hash import hash2
 
 from interfaces.Il0kPair import Il0kPair
-
-#
-# Constants
-#
-
-const _MINIMUM_LIQUIDITY = 10 ** 3
 
 #
 # Events
@@ -115,6 +110,7 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ) -> (pair : felt):
     alloc_locals
 
+    # Identical addresses
     with_attr error_message("10kSwap: IA"):
         assert_not_equal(tokenA, tokenB)
     end
@@ -129,21 +125,21 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         token0 = tokenB
         token1 = tokenA
     end
+    # Zero address
     with_attr error_message("10kSwap: ZA"):
         assert_not_zero(token0)
     end
-
+    # Pair exists
     with_attr error_message("10kSwap: PE"):
         let (pair) = getPair(token0, token1)
         assert pair = 0
     end
 
-    let (length) = _allPairsLength.read()
     let (pairContractClassHash) = _pairContractClassHash.read()
-
+    let (salt) = hash2{hash_ptr=pedersen_ptr}(token0, token1)
     let (newPair) = deploy(
         class_hash=pairContractClassHash,
-        contract_address_salt=length,
+        contract_address_salt=salt,
         constructor_calldata_size=0,
         constructor_calldata=cast(new (), felt*),
     )
@@ -151,6 +147,8 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 
     _getPair.write(token0, token1, newPair)
     _getPair.write(token1, token0, newPair)
+
+    let (length) = _allPairsLength.read()
     _allPairs.write(length, newPair)
     let newLength = length + 1
     _allPairsLength.write(newLength)
@@ -184,7 +182,8 @@ end
 func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller) = get_caller_address()
     let (feeToSetter) = _feeToSetter.read()
-    with_attr error_message("10kSwap: F"):
+    # Forbidden
+    with_attr error_message("10kSwap: FB"):
         assert feeToSetter = caller
     end
     return ()
