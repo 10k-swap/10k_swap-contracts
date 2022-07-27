@@ -115,10 +115,10 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
         assert_not_equal(tokenA, tokenB)
     end
 
-    let (comp) = is_le_felt(tokenA, tokenB)
+    let (is_le) = is_le_felt(tokenA, tokenB)
     local token0 : felt
     local token1 : felt
-    if comp == 1:
+    if is_le == 1:
         token0 = tokenA
         token1 = tokenB
     else:

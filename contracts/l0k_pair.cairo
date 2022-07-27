@@ -1,6 +1,6 @@
 %lang starknet
 
-from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
 from starkware.cairo.common.uint256 import (
     Uint256,
     uint256_check,
@@ -8,8 +8,9 @@ from starkware.cairo.common.uint256 import (
     uint256_eq,
     uint256_sqrt,
     uint256_mul,
+    uint256_le,
 )
-from starkware.cairo.common.bool import TRUE
+from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
 from starkware.cairo.common.bitwise import bitwise_or
@@ -20,6 +21,8 @@ from openzeppelin.security.reentrancyguard import ReentrancyGuard
 from openzeppelin.security.safemath import SafeUint256
 from openzeppelin.token.erc20.library import ERC20, ERC20_total_supply, ERC20_balances, Transfer
 from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
+
+from libraries.helper import warp_mul256, warp_div256, min_uint256
 
 #
 # ERC20 === start ===
@@ -130,7 +133,7 @@ const _MINIMUM_LIQUIDITY = 10 ** 3
 #
 
 @event
-func Mint(sender : Uint256, amount0 : Uint256, amount1 : Uint256):
+func Mint(sender : felt, amount0 : Uint256, amount1 : Uint256):
 end
 
 @event
@@ -302,25 +305,13 @@ end
 
 # this low-level function should be called from a contract which performs important safety checks
 @external
-func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to : felt) -> (
-    liquidity : Uint256
-):
+func mint{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}(to : felt) -> (liquidity : Uint256):
     alloc_locals
 
     ReentrancyGuard._start()
-    # if (_totalSupply == 0) {
-    #             liquidity = Math.sqrt(amount0.mul(amount1)).sub(MINIMUM_LIQUIDITY);
-    #            _mint(address(0), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens
-    #         } else {
-    #             liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
-    #         }
 
-    # require(liquidity > 0, 'UniswapV2: INSUFFICIENT_LIQUIDITY_MINTED');
-    #         _mint(to, liquidity);
-
-    # _update(balance0, balance1, _reserve0, _reserve1);
-    #         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-    #         emit Mint(msg.sender, amount0, amount1);
     let (reserve0, reserve1, _) = getReserves()
     let (token0) = _token0.read()
     let (token1) = _token1.read()
@@ -330,23 +321,64 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to 
     let (amount0) = uint256_sub(balance0, Uint256(low=reserve0, high=0))
     let (amount1) = uint256_sub(balance1, Uint256(low=reserve1, high=0))
 
-    let (feeOn) = _mintFee(reserve0, reserve1)
-    let (total_supply : Uint256) = ERC20.total_supply()
+    # let (feeOn) = _mintFee(reserve0, reserve1)
+    let (totalSupply : Uint256) = ERC20.total_supply()
 
     local liquidity : Uint256
-    let (zero_total_supply) = bitwise_or(total_supply.low, total_supply.high)  # 0|0=0  0|1=1  1|0=1  1|1=1
+    let (zero_total_supply) = bitwise_or(totalSupply.low, totalSupply.high)  # 0|0=0  0|1=1  1|0=1  1|1=1
     if zero_total_supply == 0:
-        let (sq) = uint256_sqrt(uint256_mul(amount0, amount1))
-        (liquidity) = uint256_sub(sq, _MINIMUM_LIQUIDITY)
+        let (n) = warp_mul256(amount0, amount1)
+        let (sq : Uint256) = uint256_sqrt(n)
+        let (_liquidity : Uint256) = uint256_sub(sq, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
 
         # permanently lock the first _MINIMUM_LIQUIDITY tokens
         _mint(0, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
+
+        tempvar syscall_ptr = syscall_ptr
+        tempvar pedersen_ptr : HashBuiltin* = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
     else:
-        # liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
+        # a = amount0 * totalSupply / reserve0
+        # b = amount1 * totalSupply / reserve1
+        # liquidity = min(a, b)
+        let (a_lhs : Uint256) = warp_mul256(amount0, totalSupply)
+        let (a : Uint256) = warp_div256(a_lhs, Uint256(low=reserve0, high=0))
+        let (b_lhs : Uint256) = warp_mul256(amount1, totalSupply)
+        let (b : Uint256) = warp_div256(b_lhs, Uint256(low=reserve1, high=0))
+        let (_liquidity : Uint256) = min_uint256(a, b)
+
+        tempvar syscall_ptr : felt* = syscall_ptr
+        tempvar pedersen_ptr : HashBuiltin* = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
     end
 
+    # Insufficient liquidity minted
+    let (is_le) = uint256_le(liquidity, Uint256(low=0, high=0))
+    if is_le == TRUE:
+        # with_attr error_message("10kSwap: ILM"):
+        #     assert 1 = 0
+        # end
+
+        tempvar syscall_ptr : felt* = syscall_ptr
+        tempvar pedersen_ptr : HashBuiltin* = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
+    else:
+        tempvar syscall_ptr : felt* = syscall_ptr
+        tempvar pedersen_ptr : HashBuiltin* = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
+    end
+
+    _mint(to, liquidity)
+
+    # Todo
+    # _update(balance0, balance1, _reserve0, _reserve1);
+    # if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+
+    let (sender) = get_caller_address()
+    Mint.emit(sender, amount0, amount1)
+
     ReentrancyGuard._end()
-    return (Uint256(low=0, high=0))
+    return (liquidity)
 end
 
 # force balances to match reserves
