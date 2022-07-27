@@ -1,18 +1,25 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_sub, uint256_eq
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_check,
+    uint256_sub,
+    uint256_eq,
+    uint256_sqrt,
+    uint256_mul,
+)
 from starkware.cairo.common.bool import TRUE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
+from starkware.cairo.common.bitwise import bitwise_or
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_contract_address
 
 from openzeppelin.security.reentrancyguard import ReentrancyGuard
-from openzeppelin.token.erc20.library import ERC20
+from openzeppelin.security.safemath import SafeUint256
+from openzeppelin.token.erc20.library import ERC20, ERC20_total_supply, ERC20_balances, Transfer
 from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
-
-from libraries.helper import felt_to_uint256
 
 #
 # ERC20 === start ===
@@ -326,9 +333,16 @@ func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to 
     let (feeOn) = _mintFee(reserve0, reserve1)
     let (total_supply : Uint256) = ERC20.total_supply()
 
-    let (zero_total_supply) = uint256_eq(total_supply, Uint256(low=0, high=0))
-    if zero_total_supply == TRUE:
+    local liquidity : Uint256
+    let (zero_total_supply) = bitwise_or(total_supply.low, total_supply.high)  # 0|0=0  0|1=1  1|0=1  1|1=1
+    if zero_total_supply == 0:
+        let (sq) = uint256_sqrt(uint256_mul(amount0, amount1))
+        (liquidity) = uint256_sub(sq, _MINIMUM_LIQUIDITY)
+
+        # permanently lock the first _MINIMUM_LIQUIDITY tokens
+        _mint(0, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
     else:
+        # liquidity = Math.min(amount0.mul(_totalSupply) / _reserve0, amount1.mul(_totalSupply) / _reserve1);
     end
 
     ReentrancyGuard._end()
@@ -427,6 +441,11 @@ func _mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     with_attr error_message("ERC20: amount is not a valid Uint256"):
         uint256_check(amount)
     end
+
+    # Remove zero address check
+    # with_attr error_message("ERC20: cannot mint to the zero address"):
+    #     assert_not_zero(recipient)
+    # end
 
     let (supply : Uint256) = ERC20_total_supply.read()
     with_attr error_message("ERC20: mint overflow"):

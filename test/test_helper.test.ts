@@ -8,10 +8,10 @@ describe("Amm pair", function () {
   let testHelperContract: StarknetContract;
 
   before(async function () {
-    await hardhatCompile("contracts/tests/helper_test.cairo");
+    await hardhatCompile("contracts/tests/test_helper.cairo");
 
     const contractFactory = await starknet.getContractFactory(
-      "contracts/tests/helper_test"
+      "contracts/tests/test_helper"
     );
     testHelperContract = await contractFactory.deploy();
   });
