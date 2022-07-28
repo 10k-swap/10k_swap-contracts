@@ -4,13 +4,14 @@ import { OpenZeppelinAccount, StarknetContract } from "hardhat/types/runtime";
 import { shortString } from "starknet";
 import { computeHashOnElements, pedersen } from "starknet/dist/utils/hash";
 import { MAX_FEE } from "./constants";
-import { envAccountOZ, hardhatCompile } from "./util";
-
-const TOKEN_A = 0x2;
-const TOKEN_B = 0x1;
+import { ensureEnvVar, envAccountOZ, hardhatCompile } from "./util";
 
 describe("Amm factory", function () {
-  let pairContractClassHash: string;
+  const TOKEN_A = ensureEnvVar("TOKEN_A");
+  const TOKEN_B = ensureEnvVar("TOKEN_B");
+
+  const PAIR_CONTRACT_CLASS_HASH = ensureEnvVar("PAIR_CONTRACT_CLASS_HASH");
+
   let l0kFactoryContract: StarknetContract;
   let accountOZ0: OpenZeppelinAccount;
   let accountOZ1: OpenZeppelinAccount;
@@ -22,14 +23,12 @@ describe("Amm factory", function () {
   before(async function () {
     await hardhatCompile("contracts/l0k_factory.cairo");
 
-    pairContractClassHash = <string>process.env.PAIR_CONTRACT_CLASS_HASH;
-
     accountOZ0 = await envAccountOZ(0);
     accountOZ1 = await envAccountOZ(1);
 
     const contractFactory = await starknet.getContractFactory("l0k_factory");
     l0kFactoryContract = await contractFactory.deploy({
-      pairContractClassHash,
+      pairContractClassHash: PAIR_CONTRACT_CLASS_HASH,
       feeToSetter: accountOZ0.address,
     });
     console.log("l0kFactoryContract.address: ", l0kFactoryContract.address);
@@ -76,13 +75,17 @@ describe("Amm factory", function () {
       CONTRACT_ADDRESS_PREFIX,
       l0kFactoryContract.address,
       salt,
-      pairContractClassHash,
+      PAIR_CONTRACT_CLASS_HASH,
       constructorCalldataHash,
     ]);
     console.log("pair0Address:", pair0Address);
 
-    expect(BigInt(token0)).to.equal(BigInt(TOKEN_B));
-    expect(BigInt(token1)).to.equal(BigInt(TOKEN_A));
+    expect(BigInt(token0)).to.equal(
+      BigInt(TOKEN_B > TOKEN_A ? TOKEN_A : TOKEN_B)
+    );
+    expect(BigInt(token1)).to.equal(
+      BigInt(TOKEN_B > TOKEN_A ? TOKEN_B : TOKEN_A)
+    );
     expect(BigInt(event0.data[2])).to.equal(BigInt(pair0Address));
 
     const { pair } = await l0kFactoryContract.call("getPair", {

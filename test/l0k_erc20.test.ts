@@ -7,12 +7,15 @@ import { MAX_FEE } from "./constants";
 import { envAccountOZ, hardhatCompile, stringToFelt } from "./util";
 
 describe("l0k_erc20", function () {
+  let account0: OpenZeppelinAccount;
   let l0kErc20Contract: StarknetContract;
-  const nameFelt = stringToFelt("10K Swap A");
-  const symbolFelt = stringToFelt("A");
+  const nameFelt = stringToFelt(process.env.TOKEN_NAME || "10K Swap A");
+  const symbolFelt = stringToFelt(process.env.TOKEN_SYMBOL || "A");
 
   before(async function () {
     await hardhatCompile("contracts/l0k_erc20.cairo");
+
+    account0 = await envAccountOZ(0);
 
     console.log("Deploying ", new Date());
     const contractFactory = await starknet.getContractFactory("l0k_erc20");
@@ -32,12 +35,16 @@ describe("l0k_erc20", function () {
   // });
 
   it("Test mint", async function () {
-    const to = 0x1234;
-    const mintAmount = bnToUint256(utils.parseEther("1") + "");
-    await l0kErc20Contract.invoke("mint", {
-      to,
-      amount: mintAmount,
-    });
+    const to = account0.address;
+    const mintAmount = bnToUint256(utils.parseEther("1000") + "");
+    await l0kErc20Contract.invoke(
+      "mint",
+      {
+        to,
+        amount: mintAmount,
+      },
+      { maxFee: MAX_FEE }
+    );
 
     const { balance } = await l0kErc20Contract.call("balanceOf", {
       account: to,
