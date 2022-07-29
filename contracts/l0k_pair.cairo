@@ -1,14 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
-from starkware.cairo.common.uint256 import (
-    Uint256,
-    uint256_check,
-    uint256_sub,
-    uint256_eq,
-    uint256_sqrt,
-    uint256_le,
-)
+from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_sqrt, uint256_le
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
@@ -331,8 +324,8 @@ func mint{
     let (self) = get_contract_address()
     let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
     let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
-    let (amount0) = uint256_sub(balance0, Uint256(low=reserve0, high=0))
-    let (amount1) = uint256_sub(balance1, Uint256(low=reserve1, high=0))
+    let (amount0) = SafeUint256.sub_le(balance0, Uint256(low=reserve0, high=0))
+    let (amount1) = SafeUint256.sub_le(balance1, Uint256(low=reserve1, high=0))
 
     # let (feeOn) = _mintFee(reserve0, reserve1)
     let (totalSupply : Uint256) = ERC20.total_supply()
@@ -341,7 +334,7 @@ func mint{
     if zero_total_supply == 0:
         let (n) = warp_mul256(amount0, amount1)
         let (sq : Uint256) = uint256_sqrt(n)
-        let (_liquidity : Uint256) = uint256_sub(sq, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
+        let (_liquidity : Uint256) = SafeUint256.sub_le(sq, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
 
         # permanently lock the first _MINIMUM_LIQUIDITY tokens
         _mint(0, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
@@ -485,6 +478,7 @@ func _update{
                 let (u1) = uqdiv{range_check_ptr=_range_check_ptr}(e0, reserve1)
 
                 # * never overflows, and + overflow is desired
+                # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
                 let (p0 : Uint256) = warp_mul256{range_check_ptr=_range_check_ptr}(
                     Uint256(low=u0, high=0), Uint256(low=timeElapsed, high=0)
                 )

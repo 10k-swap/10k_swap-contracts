@@ -1,15 +1,65 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
-from starkware.cairo.common.uint256 import Uint256
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_check,
+    uint256_sub,
+    uint256_eq,
+    uint256_sqrt,
+    uint256_le,
+    uint256_lt,
+)
+from openzeppelin.security.safemath import SafeUint256
 
-from libraries.helper import felt_to_uint256
+from warplib.maths.mul import warp_mul256
 
-# Adds demo tokens to the given account.
-@external
-func test_felt_to_uint256{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    low : felt
-) -> (value : Uint256):
-    let (value) = felt_to_uint256(low)
-    return (value=value)
+@view
+func test_uint256_sub{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : Uint256):
+    let (res) = uint256_sub(a, b)
+    return (res=res)
+end
+
+@view
+func test_oz_sub_le{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : Uint256):
+    let (res) = SafeUint256.sub_le(a, b)
+    return (res=res)
+end
+
+@view
+func test_oz_sub_lt{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : Uint256):
+    let (res) = SafeUint256.sub_lt(a, b)
+    return (res=res)
+end
+
+@view
+func test_mul_and_sqrt{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    amount0 : Uint256, amount1 : Uint256
+) -> (res : Uint256):
+    let (n) = warp_mul256(amount0, amount1)
+    let (sq : Uint256) = uint256_sqrt(n)
+    let (res : Uint256) = SafeUint256.sub_le(sq, Uint256(low=1000, high=0))
+    return (res=res)
+end
+
+@view
+func test_uint256_le{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : felt):
+    let (res) = uint256_le(a, b)
+    return (res=res)
+end
+
+@view
+func test_uint256_lt{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : felt):
+    let (res) = uint256_lt(a, b)
+    return (res=res)
 end

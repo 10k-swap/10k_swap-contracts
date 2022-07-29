@@ -6,6 +6,7 @@ import {
   StarknetContractFactory,
 } from "hardhat/types";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
+import { MAX_FEE } from "./constants";
 import { ensureEnvVar, envAccountOZ, hardhatCompile } from "./util";
 
 describe("Amm pair", function () {
@@ -29,9 +30,7 @@ describe("Amm pair", function () {
     l0kPairContract = contractFactory.getContractAt(PAIR_CONTRACT_ADDRESS);
     tokenAContract = erc20ContractFactory.getContractAt(TOKEN_A);
     tokenBContract = erc20ContractFactory.getContractAt(TOKEN_B);
-  });
 
-  it("Test mint", async function () {
     const { balance: balanceTokenA } = await tokenAContract.call("balanceOf", {
       account: account0.address,
     });
@@ -40,13 +39,41 @@ describe("Amm pair", function () {
     });
     console.warn("balanceTokenA:", balanceTokenA);
     console.warn("balanceTokenB:", balanceTokenB);
+  });
+
+  it("Test mint", async function () {
+    const amountA = bnToUint256(10000);
+    const amountB = bnToUint256(1000);
+
+    const invokeArray = [
+      {
+        toContract: tokenAContract,
+        functionName: "transfer",
+        calldata: { recipient: PAIR_CONTRACT_ADDRESS, amount: amountA },
+      },
+      {
+        toContract: tokenBContract,
+        functionName: "transfer",
+        calldata: { recipient: PAIR_CONTRACT_ADDRESS, amount: amountB },
+      },
+    ];
+    await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
+
+    const { balance: pairBalanceA } = await tokenAContract.call("balanceOf", {
+      account: PAIR_CONTRACT_ADDRESS,
+    });
+    const { balance: pairBalanceB } = await tokenBContract.call("balanceOf", {
+      account: PAIR_CONTRACT_ADDRESS,
+    });
+    console.warn("pairBalanceA:", pairBalanceA);
+    console.warn("pairBalanceB:", pairBalanceB);
 
     const hash = await account0.invoke(l0kPairContract, "mint", {
       to: account0.address,
     });
 
     const receipt = await starknet.getTransactionReceipt(hash);
-    console.warn("receipt:", receipt);
+    console.warn("receipt.events:", receipt.events);
 
     const { balance: balanceOfZero } = await l0kPairContract.call("balanceOf", {
       account: 0,
