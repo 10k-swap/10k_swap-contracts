@@ -457,6 +457,13 @@ func _update{
     let (bt_r) = warp_mod(block_timestamp, 2 ** 32)
     let (block_timestamp) = warp_int128_to_int32(bt_r)
 
+    # Stroage
+    let (r0) = warp_int256_to_int112(balance0)
+    _reserve0.write(r0)
+    let (r1) = warp_int256_to_int112(balance1)
+    _reserve1.write(r1)
+    _blockTimestampLast.write(block_timestamp)
+
     # overflow is desired
     let timeElapsed = block_timestamp - blockTimestampLast
 
@@ -501,15 +508,13 @@ func _update{
                     pedersen_ptr=_pedersen_ptr,
                     range_check_ptr=_range_check_ptr,
                 }(p1CumulativeLast)
+
+                # When only ouside, it will error: emit_event(keys_len=1, keys=__keys_ptr, data_len=__calldata_ptr - __data_ptr, data=__data_ptr)
+                Sync.emit{syscall_ptr=_syscall_ptr}(r0, r1)
+                return ()
             end
         end
     end
-
-    let (r0) = warp_int256_to_int112(balance0)
-    _reserve0.write(r0)
-    let (r1) = warp_int256_to_int112(balance1)
-    _reserve1.write(r1)
-    _blockTimestampLast.write(block_timestamp)
 
     Sync.emit(r0, r1)
 
