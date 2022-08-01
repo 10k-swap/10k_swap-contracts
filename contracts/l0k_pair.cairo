@@ -462,8 +462,8 @@ func swap{
         # Require amount0Out > 0 || amount1Out > 0
         let (r0) = uint256_le(amount0Out, Uint256(low=0, high=0))
         let (r1) = uint256_le(amount1Out, Uint256(low=0, high=0))
-        let (and) = bitwise_and(r0, r1)
-        assert and = FALSE
+        let (_and) = bitwise_and(r0, r1)
+        assert _and = FALSE
     end
 
     let (reserve0, reserve1, _) = getReserves()
@@ -472,8 +472,8 @@ func swap{
     with_attr error_message("10kSwap: IL"):
         let (r0) = uint256_lt(amount0Out, Uint256(low=reserve0, high=0))
         let (r1) = uint256_lt(amount1Out, Uint256(low=reserve1, high=0))
-        let (and) = bitwise_and(r0, r1)
-        assert and = TRUE
+        let (_and) = bitwise_and(r0, r1)
+        assert _and = TRUE
     end
 
     let (token0) = _token0.read()

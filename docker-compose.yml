@@ -1,0 +1,14 @@
+version: '3.8'
+
+networks:
+  # Specify the network for bridging
+  10kswap-network:
+    driver: bridge
+
+services:
+  devnet:
+    image: shardlabs/starknet-devnet:latest
+    ports:
+      - '5050:5050'
+    networks:
+      - 10kswap-network
