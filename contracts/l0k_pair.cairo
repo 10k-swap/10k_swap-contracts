@@ -5,7 +5,7 @@ from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_sqrt,
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
-from starkware.cairo.common.bitwise import bitwise_or
+from starkware.cairo.common.bitwise import bitwise_or, bitwise_and
 from starkware.starknet.common.syscalls import (
     get_caller_address,
     get_contract_address,
@@ -363,19 +363,23 @@ end
 # force balances to match reserves
 @external
 func skim{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to : felt) -> ():
+    alloc_locals
+
     ReentrancyGuard._start()
 
     let (token0) = _token0.read()
     let (token1) = _token1.read()
     let (self) = get_contract_address()
-    let (token0Banlance : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
-    let (token1Banlance : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
     let (reserve0) = _reserve0.read()
     let (reserve1) = _reserve1.read()
 
-    # Todo
-    # _safeTransfer(_token0, to, IERC20(_token0).balanceOf(address(this)).sub(reserve0));
-    # _safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)).sub(reserve1));
+    # Todo: To be implemented safeTransfer
+    let (diff0) = SafeUint256.sub_le(balance0, Uint256(low=reserve0, high=0))
+    let (diff1) = SafeUint256.sub_le(balance1, Uint256(low=reserve1, high=0))
+    IERC20.transfer(contract_address=token0, recipient=to, amount=diff0)
+    IERC20.transfer(contract_address=token1, recipient=to, amount=diff1)
 
     ReentrancyGuard._end()
 
@@ -384,19 +388,22 @@ end
 
 # force reserves to match balances
 @external
-func sync{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> ():
+func sync{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}() -> ():
+    alloc_locals
+
     ReentrancyGuard._start()
 
     let (token0) = _token0.read()
     let (token1) = _token1.read()
     let (self) = get_contract_address()
-    let (token0Banlance : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
-    let (token1Banlance : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
     let (reserve0) = _reserve0.read()
     let (reserve1) = _reserve1.read()
 
-    # Todo
-    # _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
+    _update(balance0, balance1, reserve0, reserve1)
 
     ReentrancyGuard._end()
 
@@ -457,64 +464,46 @@ func _update{
     let (bt_r) = warp_mod(block_timestamp, 2 ** 32)
     let (block_timestamp) = warp_int128_to_int32(bt_r)
 
+    # overflow is desired
+    let timeElapsed = block_timestamp - blockTimestampLast
+
+    let (if0) = warp_gt(timeElapsed, 0)
+    let (if1) = warp_neq(reserve0, 0)
+    let (if2) = warp_neq(reserve1, 0)
+    let (b0) = bitwise_and(if0, if1)
+    let (b1) = bitwise_and(b0, if2)
+    if b1 == TRUE:
+        let (e0) = encode(reserve0)
+        let (e1) = encode(reserve1)
+        let (u0) = uqdiv(e1, reserve0)
+        let (u1) = uqdiv(e0, reserve1)
+
+        # * never overflows, and + overflow is desired
+        # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
+        let (p0 : Uint256) = warp_mul256(Uint256(low=u0, high=0), Uint256(low=timeElapsed, high=0))
+        let (p1 : Uint256) = warp_mul256(Uint256(low=u1, high=0), Uint256(low=timeElapsed, high=0))
+        let (p0CumulativeLast : Uint256) = warp_add256(p0, price0CumulativeLast)
+        let (p1CumulativeLast : Uint256) = warp_add256(p1, price1CumulativeLast)
+        _price0CumulativeLast.write(p0CumulativeLast)
+        _price1CumulativeLast.write(p1CumulativeLast)
+
+        # if condition will revoked implicit arguments
+        # https://www.cairo-lang.org/docs/how_cairo_works/builtins.html?highlight=revoke%20reference#revoked-implicit-arguments
+        tempvar syscall_ptr = syscall_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
+    else:
+        tempvar syscall_ptr = syscall_ptr
+        tempvar pedersen_ptr = pedersen_ptr
+        tempvar range_check_ptr = range_check_ptr
+    end
+
     # Stroage
     let (r0) = warp_int256_to_int112(balance0)
     _reserve0.write(r0)
     let (r1) = warp_int256_to_int112(balance1)
     _reserve1.write(r1)
     _blockTimestampLast.write(block_timestamp)
-
-    # overflow is desired
-    let timeElapsed = block_timestamp - blockTimestampLast
-
-    let (if_0) = warp_gt(timeElapsed, 0)
-    let (if_1) = warp_neq(reserve0, 0)
-    let (if_2) = warp_neq(reserve1, 0)
-    if if_0 == TRUE:
-        if if_1 == TRUE:
-            if if_2 == TRUE:
-                # if condition will revoked implicit arguments
-                # https://www.cairo-lang.org/docs/how_cairo_works/builtins.html?highlight=revoke%20reference#revoked-implicit-arguments
-                tempvar _syscall_ptr : felt* = syscall_ptr
-                tempvar _pedersen_ptr : HashBuiltin* = pedersen_ptr
-                tempvar _range_check_ptr = range_check_ptr
-
-                let (e0) = encode{range_check_ptr=_range_check_ptr}(reserve0)
-                let (e1) = encode{range_check_ptr=_range_check_ptr}(reserve1)
-                let (u0) = uqdiv{range_check_ptr=_range_check_ptr}(e1, reserve0)
-                let (u1) = uqdiv{range_check_ptr=_range_check_ptr}(e0, reserve1)
-
-                # * never overflows, and + overflow is desired
-                # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
-                let (p0 : Uint256) = warp_mul256{range_check_ptr=_range_check_ptr}(
-                    Uint256(low=u0, high=0), Uint256(low=timeElapsed, high=0)
-                )
-                let (p1 : Uint256) = warp_mul256{range_check_ptr=_range_check_ptr}(
-                    Uint256(low=u1, high=0), Uint256(low=timeElapsed, high=0)
-                )
-                let (p0CumulativeLast : Uint256) = warp_add256{range_check_ptr=_range_check_ptr}(
-                    p0, price0CumulativeLast
-                )
-                let (p1CumulativeLast : Uint256) = warp_add256{range_check_ptr=_range_check_ptr}(
-                    p1, price1CumulativeLast
-                )
-                _price0CumulativeLast.write{
-                    syscall_ptr=_syscall_ptr,
-                    pedersen_ptr=_pedersen_ptr,
-                    range_check_ptr=_range_check_ptr,
-                }(p0CumulativeLast)
-                _price1CumulativeLast.write{
-                    syscall_ptr=_syscall_ptr,
-                    pedersen_ptr=_pedersen_ptr,
-                    range_check_ptr=_range_check_ptr,
-                }(p1CumulativeLast)
-
-                # When only ouside, it will error: emit_event(keys_len=1, keys=__keys_ptr, data_len=__calldata_ptr - __data_ptr, data=__data_ptr)
-                Sync.emit{syscall_ptr=_syscall_ptr}(r0, r1)
-                return ()
-            end
-        end
-    end
 
     Sync.emit(r0, r1)
 

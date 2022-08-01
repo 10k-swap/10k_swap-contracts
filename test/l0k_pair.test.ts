@@ -79,5 +79,14 @@ describe("Amm pair", function () {
       account: 0,
     });
     expect(BigInt(uint256ToBN(balanceOfZero) + "")).to.equal(BigInt(1000));
+
+    const { balance: balanceOfAccount } = await l0kPairContract.call(
+      "balanceOf",
+      {
+        account: account0.address,
+      }
+    );
+    console.log("balanceOfAccount:", balanceOfAccount);
+    expect(uint256ToBN(balanceOfAccount).toNumber()).to.gt(0);
   });
 });
