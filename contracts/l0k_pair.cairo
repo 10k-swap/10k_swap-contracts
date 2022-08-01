@@ -1,7 +1,13 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin, BitwiseBuiltin
-from starkware.cairo.common.uint256 import Uint256, uint256_check, uint256_sqrt, uint256_le
+from starkware.cairo.common.uint256 import (
+    Uint256,
+    uint256_check,
+    uint256_sqrt,
+    uint256_le,
+    uint256_lt,
+)
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
@@ -360,6 +366,157 @@ func mint{
     end
 end
 
+# this low-level function should be called from a contract which performs important safety checks
+@external
+func burn{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}(to : felt) -> (amount0 : Uint256, amount1 : Uint256):
+    alloc_locals
+
+    ReentrancyGuard._start()
+
+    let (reserve0, reserve1, _) = getReserves()
+    let (token0) = _token0.read()
+    let (token1) = _token1.read()
+    let (self) = get_contract_address()
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+    let (liquidity : Uint256) = ERC20.balance_of(account=self)
+
+    let (feeOn) = _mintFee(reserve0, reserve1)
+    let (totalSupply : Uint256) = ERC20.total_supply()
+
+    # using balances ensures pro-rata distribution
+    let (a0) = warp_mul256(liquidity, balance0)
+    let (amount0) = warp_div256(a0, totalSupply)
+    let (a1) = warp_mul256(liquidity, balance1)
+    let (amount1) = warp_div256(a1, totalSupply)
+
+    # Insufficient liquidity burned
+    with_attr error_message("10kSwap: ILB"):
+        let (r0) = uint256_le(amount0, Uint256(low=0, high=0))
+        let (r1) = uint256_le(amount1, Uint256(low=0, high=0))
+        assert r0 = FALSE
+        assert r1 = FALSE
+    end
+
+    _burn(self, liquidity)
+    IERC20.transfer(contract_address=token0, recipient=to, amount=amount0)
+    IERC20.transfer(contract_address=token1, recipient=to, amount=amount1)
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+    _update(balance0, balance1, reserve0, reserve1)
+
+    # TODO
+    # if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+    let (sender) = get_caller_address()
+    Burn.emit(sender, amount0, amount1, to)
+
+    ReentrancyGuard._end()
+
+    return (amount0=amount0, amount1=amount1)
+end
+
+# // this low-level function should be called from a contract which performs important safety checks
+# function swap(uint amount0Out, uint amount1Out, address to, bytes calldata data) external lock {
+#     require(amount0Out > 0 || amount1Out > 0, 'UniswapV2: INSUFFICIENT_OUTPUT_AMOUNT');
+#     (uint112 _reserve0, uint112 _reserve1,) = getReserves(); // gas savings
+#     require(amount0Out < _reserve0 && amount1Out < _reserve1, 'UniswapV2: INSUFFICIENT_LIQUIDITY');
+
+# uint balance0;
+#     uint balance1;
+#     { // scope for _token{0,1}, avoids stack too deep errors
+#     address _token0 = token0;
+#     address _token1 = token1;
+#     require(to != _token0 && to != _token1, 'UniswapV2: INVALID_TO');
+#     if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
+#     if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
+#     if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
+#     balance0 = IERC20(_token0).balanceOf(address(this));
+#     balance1 = IERC20(_token1).balanceOf(address(this));
+#     }
+#     uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
+#     uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
+#     require(amount0In > 0 || amount1In > 0, 'UniswapV2: INSUFFICIENT_INPUT_AMOUNT');
+#     { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+#     uint balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(3));
+#     uint balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(3));
+#     require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(1000**2), 'UniswapV2: K');
+#     }
+
+# _update(balance0, balance1, _reserve0, _reserve1);
+#     emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);
+# }
+
+# this low-level function should be called from a contract which performs important safety checks
+@external
+func swap{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}(amount0Out : Uint256, amount1Out : Uint256, to : felt) -> ():
+    alloc_locals
+
+    ReentrancyGuard._start()
+
+    # Insufficient output amount
+    with_attr error_message("10kSwap: IOA"):
+        # Require amount0Out > 0 || amount1Out > 0
+        let (r0) = uint256_le(amount0Out, Uint256(low=0, high=0))
+        let (r1) = uint256_le(amount1Out, Uint256(low=0, high=0))
+        let (and) = bitwise_and(r0, r1)
+        assert and = FALSE
+    end
+
+    let (reserve0, reserve1, _) = getReserves()
+
+    # Insufficient liquidity
+    with_attr error_message("10kSwap: IL"):
+        let (r0) = uint256_lt(amount0Out, Uint256(low=reserve0, high=0))
+        let (r1) = uint256_lt(amount1Out, Uint256(low=reserve1, high=0))
+        let (and) = bitwise_and(r0, r1)
+        assert and = TRUE
+    end
+
+    let (token0) = _token0.read()
+    let (token1) = _token1.read()
+    let (self) = get_contract_address()
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+
+
+    let (feeOn) = _mintFee(reserve0, reserve1)
+    let (totalSupply : Uint256) = ERC20.total_supply()
+
+    # using balances ensures pro-rata distribution
+    let (a0) = warp_mul256(liquidity, balance0)
+    let (amount0) = warp_div256(a0, totalSupply)
+    let (a1) = warp_mul256(liquidity, balance1)
+    let (amount1) = warp_div256(a1, totalSupply)
+
+    # Insufficient liquidity burned
+    with_attr error_message("10kSwap: ILB"):
+        let (r0) = uint256_le(amount0, Uint256(low=0, high=0))
+        let (r1) = uint256_le(amount1, Uint256(low=0, high=0))
+        assert r0 = FALSE
+        assert r1 = FALSE
+    end
+
+    _burn(self, liquidity)
+    IERC20.transfer(contract_address=token0, recipient=to, amount=amount0)
+    IERC20.transfer(contract_address=token1, recipient=to, amount=amount1)
+    let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
+    let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
+    _update(balance0, balance1, reserve0, reserve1)
+
+    # TODO
+    # if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+    let (sender) = get_caller_address()
+    Burn.emit(sender, amount0, amount1, to)
+
+    ReentrancyGuard._end()
+
+    return (amount0=amount0, amount1=amount1)
+end
+
 # force balances to match reserves
 @external
 func skim{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to : felt) -> ():
@@ -559,6 +716,32 @@ func _mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ERC20_balances.write(recipient, new_balance)
 
     Transfer.emit(0, recipient, amount)
+    return ()
+end
+
+func _burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    account : felt, amount : Uint256
+):
+    with_attr error_message("ERC20: amount is not a valid Uint256"):
+        uint256_check(amount)
+    end
+
+    # Remove zero address check
+    # with_attr error_message("ERC20: cannot burn from the zero address"):
+    #     assert_not_zero(account)
+    # end
+
+    let (balance : Uint256) = ERC20_balances.read(account)
+    with_attr error_message("ERC20: burn amount exceeds balance"):
+        let (new_balance : Uint256) = SafeUint256.sub_le(balance, amount)
+    end
+
+    ERC20_balances.write(account, new_balance)
+
+    let (supply : Uint256) = ERC20_total_supply.read()
+    let (new_supply : Uint256) = SafeUint256.sub_le(supply, amount)
+    ERC20_total_supply.write(new_supply)
+    Transfer.emit(account, 0, amount)
     return ()
 end
 

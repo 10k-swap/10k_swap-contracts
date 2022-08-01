@@ -69,9 +69,7 @@ namespace Il0kPair:
     func burn(to : felt) -> (amount0 : Uint256, amount1 : Uint256):
     end
 
-    func swap(amount0Out : Uint256, amount1Out : Uint256, to : felt) -> (
-        amount0 : Uint256, amount1 : Uint256
-    ):
+    func swap(amount0Out : Uint256, amount1Out : Uint256, to : felt) -> ():
     end
 
     # force balances to match reserves
