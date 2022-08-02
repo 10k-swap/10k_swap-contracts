@@ -8,7 +8,7 @@ import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
 import { ensureEnvVar, envAccountOZ } from "./util";
 
-describe("Amm pair", function () {
+describe("Amm pair mint", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
   const TOKEN_B = ensureEnvVar("TOKEN_B");
   const PAIR_CONTRACT_ADDRESS = ensureEnvVar("PAIR_CONTRACT_ADDRESS");

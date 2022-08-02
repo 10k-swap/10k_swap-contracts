@@ -137,11 +137,13 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 
     let (pairContractClassHash) = _pairContractClassHash.read()
     let (salt) = hash2{hash_ptr=pedersen_ptr}(token0, token1)
+    # https://www.cairo-lang.org/docs/hello_starknet/deploying_from_contracts.html
     let (newPair) = deploy(
         class_hash=pairContractClassHash,
         contract_address_salt=salt,
         constructor_calldata_size=0,
         constructor_calldata=cast(new (), felt*),
+        deploy_from_zero=0,
     )
     Il0kPair.initialize(contract_address=newPair, token0=token0, token1=token1)
 

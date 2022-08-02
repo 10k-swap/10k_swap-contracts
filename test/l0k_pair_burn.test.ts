@@ -5,7 +5,7 @@ import {
 } from "hardhat/types";
 import { ensureEnvVar, envAccountOZ } from "./util";
 
-describe("Amm pair", function () {
+describe("Amm pair burn", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
   const TOKEN_B = ensureEnvVar("TOKEN_B");
   const PAIR_CONTRACT_ADDRESS = ensureEnvVar("PAIR_CONTRACT_ADDRESS");

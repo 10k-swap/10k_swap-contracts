@@ -63,3 +63,19 @@ func test_uint256_lt{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
     let (res) = uint256_lt(a, b)
     return (res=res)
 end
+
+@view
+func test_uint256_rsm{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res : Uint256
+):
+    alloc_locals
+
+    local a : Uint256 = (Uint256(low=1, high=0))
+    if 1 == 1:
+        a = Uint256(low=22, high=0)
+    end
+
+    let (res) = uint256_mul(a, Uint256(low=10, high=0))
+
+    return (res=res)
+end

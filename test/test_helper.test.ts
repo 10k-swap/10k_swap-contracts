@@ -4,7 +4,7 @@ import { StarknetContract } from "hardhat/types";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { hardhatCompile } from "./util";
 
-describe("Amm pair", function () {
+describe("Test helper", function () {
   let testHelperContract: StarknetContract;
 
   before(async function () {
@@ -82,6 +82,12 @@ describe("Amm pair", function () {
       a,
       b,
     });
+
+    console.warn("res:", res);
+  });
+
+  it("Test test_uint256_rsm", async function () {
+    const { res } = await testHelperContract.call("test_uint256_rsm", {});
 
     console.warn("res:", res);
   });
