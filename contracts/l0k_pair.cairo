@@ -330,8 +330,8 @@ func mint{
     let (self) = get_contract_address()
     let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
     let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
-    let (amount0) = SafeUint256.sub_le(balance0, Uint256(low=reserve0, high=0))
-    let (amount1) = SafeUint256.sub_le(balance1, Uint256(low=reserve1, high=0))
+    let (amount0) = SafeUint256.sub_le(balance0, Uint256(reserve0, 0))
+    let (amount1) = SafeUint256.sub_le(balance1, Uint256(reserve1, 0))
 
     # let (feeOn) = _mintFee(reserve0, reserve1)
     let (totalSupply : Uint256) = ERC20.total_supply()
@@ -340,10 +340,10 @@ func mint{
     if zero_total_supply == 0:
         let (n) = warp_mul256(amount0, amount1)
         let (sq : Uint256) = uint256_sqrt(n)
-        let (_liquidity : Uint256) = SafeUint256.sub_le(sq, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
+        let (_liquidity : Uint256) = SafeUint256.sub_le(sq, Uint256(_MINIMUM_LIQUIDITY, 0))
 
         # permanently lock the first _MINIMUM_LIQUIDITY tokens
-        _mint(0, Uint256(low=_MINIMUM_LIQUIDITY, high=0))
+        _mint(0, Uint256(_MINIMUM_LIQUIDITY, 0))
 
         _mint_part1(to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
 
@@ -354,9 +354,9 @@ func mint{
         # b = amount1 * totalSupply / reserve1
         # liquidity = min(a, b)
         let (a_lhs : Uint256) = warp_mul256(amount0, totalSupply)
-        let (a : Uint256) = warp_div256(a_lhs, Uint256(low=reserve0, high=0))
+        let (a : Uint256) = warp_div256(a_lhs, Uint256(reserve0, 0))
         let (b_lhs : Uint256) = warp_mul256(amount1, totalSupply)
-        let (b : Uint256) = warp_div256(b_lhs, Uint256(low=reserve1, high=0))
+        let (b : Uint256) = warp_div256(b_lhs, Uint256(reserve1, 0))
         let (_liquidity : Uint256) = min_uint256(a, b)
 
         _mint_part1(to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
@@ -394,8 +394,8 @@ func burn{
 
     # Insufficient liquidity burned
     with_attr error_message("10kSwap: ILB"):
-        let (r0) = uint256_le(amount0, Uint256(low=0, high=0))
-        let (r1) = uint256_le(amount1, Uint256(low=0, high=0))
+        let (r0) = uint256_le(amount0, Uint256(0, 0))
+        let (r1) = uint256_le(amount1, Uint256(0, 0))
         assert r0 = FALSE
         assert r1 = FALSE
     end
@@ -429,8 +429,8 @@ func swap{
     # Insufficient output amount
     with_attr error_message("10kSwap: IOA"):
         # Require amount0Out > 0 || amount1Out > 0
-        let (r0) = uint256_le(amount0Out, Uint256(low=0, high=0))
-        let (r1) = uint256_le(amount1Out, Uint256(low=0, high=0))
+        let (r0) = uint256_le(amount0Out, Uint256(0, 0))
+        let (r1) = uint256_le(amount1Out, Uint256(0, 0))
         assert r0 * r1 = FALSE
     end
 
@@ -438,8 +438,8 @@ func swap{
 
     # Insufficient liquidity
     with_attr error_message("10kSwap: IL"):
-        let (r0) = uint256_lt(amount0Out, Uint256(low=reserve0, high=0))
-        let (r1) = uint256_lt(amount1Out, Uint256(low=reserve1, high=0))
+        let (r0) = uint256_lt(amount0Out, Uint256(reserve0, 0))
+        let (r1) = uint256_lt(amount1Out, Uint256(reserve1, 0))
         assert r0 * r1 = TRUE
     end
 
@@ -474,23 +474,23 @@ func swap{
     # Insufficient input amount
     with_attr error_message("10kSwap: IIA"):
         # Require amount0In > 0 || amount1In > 0
-        let (r0) = uint256_le(amount0In, Uint256(low=0, high=0))
-        let (r1) = uint256_le(amount1In, Uint256(low=0, high=0))
+        let (r0) = uint256_le(amount0In, Uint256(0, 0))
+        let (r1) = uint256_le(amount1In, Uint256(0, 0))
         assert r0 * r1 = FALSE
     end
 
     with_attr error_message("10kSwap: K"):
-        let (b0 : Uint256) = warp_mul256(balance0, Uint256(low=1000, 0))
-        let (a0 : Uint256) = warp_mul256(amount0In, Uint256(low=3, 0))
+        let (b0 : Uint256) = warp_mul256(balance0, Uint256(1000, 0))
+        let (a0 : Uint256) = warp_mul256(amount0In, Uint256(3, 0))
         let (balance0Adjusted : Uint256) = SafeUint256.sub_le(b0, a0)
 
-        let (b1 : Uint256) = warp_mul256(balance1, Uint256(low=1000, 0))
-        let (a1 : Uint256) = warp_mul256(amount1In, Uint256(low=3, 0))
+        let (b1 : Uint256) = warp_mul256(balance1, Uint256(1000, 0))
+        let (a1 : Uint256) = warp_mul256(amount1In, Uint256(3, 0))
         let (balance1Adjusted : Uint256) = SafeUint256.sub_le(b1, a1)
 
         let (m0) = warp_mul256(balance0Adjusted, balance1Adjusted)
-        let (m1_0) = warp_mul256(Uint256(low=reserve0, high=0), Uint256(low=reserve1, high=0))
-        let (m1) = warp_mul256(m1_0, Uint256(low=1000 ** 2, high=0))
+        let (m1_0) = warp_mul256(Uint256(reserve0, 0), Uint256(reserve1, 0))
+        let (m1) = warp_mul256(m1_0, Uint256(1000 ** 2, 0))
 
         let (is_lt) = uint256_lt(m0, m1)
 
@@ -523,8 +523,8 @@ func skim{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(to 
     let (reserve1) = _reserve1.read()
 
     # Todo: To be implemented safeTransfer
-    let (diff0) = SafeUint256.sub_le(balance0, Uint256(low=reserve0, high=0))
-    let (diff1) = SafeUint256.sub_le(balance1, Uint256(low=reserve1, high=0))
+    let (diff0) = SafeUint256.sub_le(balance0, Uint256(reserve0, 0))
+    let (diff1) = SafeUint256.sub_le(balance1, Uint256(reserve1, 0))
     IERC20.transfer(contract_address=token0, recipient=to, amount=diff0)
     IERC20.transfer(contract_address=token1, recipient=to, amount=diff1)
 
@@ -575,7 +575,7 @@ func _mint_part1{
 ):
     # Insufficient liquidity minted
     with_attr error_message("10kSwap: ILM"):
-        let (is_le) = uint256_le(liquidity, Uint256(low=0, high=0))
+        let (is_le) = uint256_le(liquidity, Uint256(0, 0))
         assert is_le = FALSE
     end
 
@@ -598,8 +598,8 @@ func _update{
 
     # Overflow
     with_attr error_message("10kSwap: OV"):
-        let (is_le_0) = uint256_le(balance0, Uint256(low=Q112 - 1, high=0))
-        let (is_le_1) = uint256_le(balance1, Uint256(low=Q112 - 1, high=0))
+        let (is_le_0) = uint256_le(balance0, Uint256(Q112 - 1, 0))
+        let (is_le_1) = uint256_le(balance1, Uint256(Q112 - 1, 0))
         assert (is_le_0, is_le_1) = (TRUE, TRUE)
     end
 
@@ -627,8 +627,8 @@ func _update{
 
         # * never overflows, and + overflow is desired
         # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
-        let (p0 : Uint256) = warp_mul256(Uint256(low=u0, high=0), Uint256(low=timeElapsed, high=0))
-        let (p1 : Uint256) = warp_mul256(Uint256(low=u1, high=0), Uint256(low=timeElapsed, high=0))
+        let (p0 : Uint256) = warp_mul256(Uint256(u0, 0), Uint256(timeElapsed, 0))
+        let (p1 : Uint256) = warp_mul256(Uint256(u1, 0), Uint256(timeElapsed, 0))
         let (p0CumulativeLast : Uint256) = warp_add256(p0, price0CumulativeLast)
         let (p1CumulativeLast : Uint256) = warp_add256(p1, price1CumulativeLast)
         _price0CumulativeLast.write(p0CumulativeLast)
@@ -738,7 +738,7 @@ end
 func _swap_Transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     token : felt, recipient : felt, amountOut : Uint256
 ) -> ():
-    let (is_le) = uint256_le(amountOut, Uint256(low=0, high=0))
+    let (is_le) = uint256_le(amountOut, Uint256(0, 0))
     if is_le == TRUE:
         return ()
     end
@@ -754,14 +754,14 @@ func _swap_get_amountIn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_
     alloc_locals
 
     # amountIn = balance <= reserve - amountOut ? 0 : balance - (reserve - amountOut)
-    let (a) = SafeUint256.sub_le(Uint256(low=reserve, high=0), amountOut)
+    let (a) = SafeUint256.sub_le(Uint256(reserve, 0), amountOut)
     let (is_le) = uint256_le(balance, a)
     if is_le == FALSE:
         let (_amountIn) = SafeUint256.sub_le(balance, a)
         return (amountIn=_amountIn)
     end
 
-    return (amountIn=Uint256(low=0, high=0))
+    return (amountIn=Uint256(0, 0))
 end
 
 #

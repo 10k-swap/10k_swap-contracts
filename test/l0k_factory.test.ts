@@ -28,7 +28,7 @@ describe("Amm factory", function () {
 
     const contractFactory = await starknet.getContractFactory("l0k_factory");
     l0kFactoryContract = await contractFactory.deploy({
-      pairContractClassHash: PAIR_CONTRACT_CLASS_HASH,
+      pairClass: PAIR_CONTRACT_CLASS_HASH,
       feeToSetter: accountOZ0.address,
     });
     console.log("l0kFactoryContract.address: ", l0kFactoryContract.address);

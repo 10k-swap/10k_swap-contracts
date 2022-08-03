@@ -1,6 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.bool import FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
 from starkware.starknet.common.syscalls import get_caller_address
@@ -8,6 +9,7 @@ from starkware.starknet.common.syscalls import deploy
 from starkware.cairo.common.hash import hash2
 
 from interfaces.Il0kPair import Il0kPair
+from libraries.l0k_library import l0kLibrary
 
 #
 # Events
@@ -22,7 +24,7 @@ end
 #
 
 @storage_var
-func _pairContractClassHash() -> (pairContractClassHash : felt):
+func _pairClass() -> (pairClass : felt):
 end
 
 @storage_var
@@ -51,9 +53,9 @@ end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    pairContractClassHash : felt, feeToSetter : felt
+    pairClass : felt, feeToSetter : felt
 ):
-    _pairContractClassHash.write(pairContractClassHash)
+    _pairClass.write(pairClass)
     _feeToSetter.write(feeToSetter)
     return ()
 end
@@ -110,40 +112,23 @@ func createPair{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 ) -> (pair : felt):
     alloc_locals
 
-    # Identical addresses
-    with_attr error_message("10kSwap: IA"):
-        assert_not_equal(tokenA, tokenB)
-    end
+    let (token0, token1) = l0kLibrary.sortTokens(tokenA, tokenB)
 
-    let (is_le) = is_le_felt(tokenA, tokenB)
-    local token0 : felt
-    local token1 : felt
-    if is_le == 1:
-        token0 = tokenA
-        token1 = tokenB
-    else:
-        token0 = tokenB
-        token1 = tokenA
-    end
-    # Zero address
-    with_attr error_message("10kSwap: ZA"):
-        assert_not_zero(token0)
-    end
     # Pair exists
     with_attr error_message("10kSwap: PE"):
-        let (pair) = getPair(token0, token1)
+        let (pair) = _getPair.read(token0, token1)
         assert pair = 0
     end
 
-    let (pairContractClassHash) = _pairContractClassHash.read()
+    let (pairClass) = _pairClass.read()
     let (salt) = hash2{hash_ptr=pedersen_ptr}(token0, token1)
     # https://www.cairo-lang.org/docs/hello_starknet/deploying_from_contracts.html
     let (newPair) = deploy(
-        class_hash=pairContractClassHash,
+        class_hash=pairClass,
         contract_address_salt=salt,
         constructor_calldata_size=0,
         constructor_calldata=cast(new (), felt*),
-        deploy_from_zero=0,
+        deploy_from_zero=FALSE,
     )
     Il0kPair.initialize(contract_address=newPair, token0=token0, token1=token1)
 
