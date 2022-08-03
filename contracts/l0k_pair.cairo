@@ -33,6 +33,7 @@ from warplib.maths.int_conversions import warp_int256_to_int112, warp_int128_to_
 
 from libraries.l0k_library import min_uint256
 from libraries.uq112x112 import Q112, encode, uqdiv
+from interfaces.Il0kFactory import Il0kFactory
 
 #
 # ERC20 === start ===
@@ -661,24 +662,44 @@ end
 func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reserve0 : felt, reserve1 : felt
 ) -> (feeOn : felt):
-    # address feeTo = IUniswapV2Factory(factory).feeTo();
-    #     feeOn = feeTo != address(0);
-    #     uint _kLast = kLast; // gas savings
-    #     if (feeOn) {
-    #         if (_kLast != 0) {
-    #             uint rootK = Math.sqrt(uint(_reserve0).mul(_reserve1));
-    #             uint rootKLast = Math.sqrt(_kLast);
-    #             if (rootK > rootKLast) {
-    #                 uint numerator = totalSupply.mul(rootK.sub(rootKLast));
-    #                 uint denominator = rootK.mul(5).add(rootKLast);
-    #                 uint liquidity = numerator / denominator;
-    #                 if (liquidity > 0) _mint(feeTo, liquidity);
-    #             }
-    #         }
-    #     } else if (_kLast != 0) {
-    #         kLast = 0;
-    #     }
-    return (0)
+    let (factory) = _factory.read()
+    let (kLast : Uint256) = _kLast.read()
+    let (totalSupply : Uint256) = ERC20.total_supply()
+    let (feeTo) = Il0kFactory.feeTo(contract_address=factory)
+
+    let (notFeeOn) = is_le_felt(feeTo, 0)
+    let (notKLast) = uint256_le(kLast, Uint256(0, 0))
+
+    if notFeeOn == FALSE:
+        if notKLast == FALSE:
+            let (m0 : Uint256) = SafeUint256.mul(Uint256(reserve0, 0), Uint256(reserve1, 0))
+            let (rootK : Uint256) = uint256_sqrt(m0)
+            let (rootKLast : Uint256) = uint256_sqrt(kLast)
+
+            let (is_le) = uint256_le(rootK, rootKLast)
+            if is_le == FALSE:
+                let (s1 : Uint256) = SafeUint256.sub_le(rootK, rootKLast)
+                let (numerator : Uint256) = SafeUint256.mul(totalSupply, s1)
+
+                let (m1 : Uint256) = SafeUint256.mul(rootK, Uint256(5, 0))
+                let (denominator : Uint256) = SafeUint256.add(m1, rootKLast)
+
+                let (liquidity : Uint256) = warp_div256(numerator, denominator)
+                let (liquidity_le_zero) = uint256_le(liquidity, Uint256(0, 0))
+                if liquidity_le_zero == FALSE:
+                    _mint(feeTo, liquidity)
+                end
+            end
+        end
+
+        return (feeOn=TRUE)
+    else:
+        if notKLast == FALSE:
+            _kLast.write(Uint256(0, 0))
+        end
+
+        return (feeOn=FALSE)
+    end
 end
 
 func _mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(

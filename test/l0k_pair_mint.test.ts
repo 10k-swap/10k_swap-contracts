@@ -45,8 +45,8 @@ describe("Amm pair mint", function () {
   });
 
   it("Test mint", async function () {
-    const amountA = bnToUint256(10000);
-    const amountB = bnToUint256(1000);
+    const amountA = bnToUint256(1000000);
+    const amountB = bnToUint256(100000);
 
     const invokeArray = [
       {
