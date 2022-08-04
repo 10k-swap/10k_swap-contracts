@@ -34,25 +34,26 @@ describe("Amm factory", function () {
     console.log("l0kFactoryContract.address: ", l0kFactoryContract.address);
   });
 
-  // it("Test feeTo and feeToSetter", async function () {
-  //   await accountOZ0.invoke(
-  //     l0kFactoryContract,
-  //     "setFeeToSetter",
-  //     { feeToSetter: accountOZ1.address },
-  //     { maxFee: MAX_FEE }
-  //   );
-  //   const { feeToSetter } = await l0kFactoryContract.call("feeToSetter");
-  //   expect(feeToSetter).to.deep.equal(BigInt(accountOZ1.address));
+  it("Test feeTo and feeToSetter", async function () {
+    await accountOZ0.invoke(
+      l0kFactoryContract,
+      "setFeeToSetter",
+      { feeToSetter: accountOZ1.address },
+      { maxFee: MAX_FEE }
+    );
+    const { feeToSetter } = await l0kFactoryContract.call("feeToSetter");
+    expect(feeToSetter).to.deep.equal(BigInt(accountOZ1.address));
 
-  //   await accountOZ1.invoke(
-  //     l0kFactoryContract,
-  //     "setFeeTo",
-  //     { feeTo: accountOZ0.address },
-  //     { maxFee: MAX_FEE }
-  //   );
-  //   const { feeTo } = await l0kFactoryContract.call("feeTo");
-  //   expect(feeTo).to.deep.equal(BigInt(accountOZ0.address));
-  // });
+    await accountOZ1.invoke(
+      l0kFactoryContract,
+      "setFeeTo",
+      { feeTo: accountOZ1.address },
+      { maxFee: MAX_FEE }
+    );
+    const { feeTo } = await l0kFactoryContract.call("feeTo");
+    console.log("feeTo:", feeTo);
+    expect(feeTo).to.deep.equal(BigInt(accountOZ1.address));
+  });
 
   it("Test createPair", async function () {
     const hash = await l0kFactoryContract.invoke(

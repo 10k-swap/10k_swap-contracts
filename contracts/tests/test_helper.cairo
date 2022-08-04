@@ -9,6 +9,7 @@ from starkware.cairo.common.uint256 import (
     uint256_sqrt,
     uint256_le,
     uint256_lt,
+    uint256_mul,
 )
 from openzeppelin.security.safemath import SafeUint256
 
@@ -65,17 +66,15 @@ func test_uint256_lt{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_che
 end
 
 @view
-func test_uint256_rsm{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    res : Uint256
-):
+func test_SafeUint256_mul{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    a : Uint256, b : Uint256
+) -> (res : Uint256):
     alloc_locals
 
-    local a : Uint256 = (Uint256(low=1, high=0))
-    if 1 == 1:
-        a = Uint256(low=22, high=0)
+    if 1 == 0:
+        return (res=Uint256(0, 0))
+    else:
+        let (res) = SafeUint256.mul(a, b)
+        return (res=res)
     end
-
-    let (res) = uint256_mul(a, Uint256(low=10, high=0))
-
-    return (res=res)
 end

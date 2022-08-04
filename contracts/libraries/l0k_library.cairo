@@ -157,7 +157,7 @@ namespace l0kLibrary:
     end
 
     # given an output amount of an asset and pair reserves, returns a required input amount of the other asset
-    func getAmountOut{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+    func getAmountIn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         amountOut : Uint256, reserveIn : felt, reserveOut : felt
     ) -> (amountIn : Uint256):
         alloc_locals

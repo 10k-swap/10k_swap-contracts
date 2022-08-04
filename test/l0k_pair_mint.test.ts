@@ -1,9 +1,6 @@
 import { expect } from "chai";
 import { starknet } from "hardhat";
-import {
-  OpenZeppelinAccount,
-  StarknetContract
-} from "hardhat/types";
+import { OpenZeppelinAccount, StarknetContract } from "hardhat/types";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
 import { ensureEnvVar, envAccountOZ } from "./util";
@@ -17,6 +14,7 @@ describe("Amm pair mint", function () {
   let tokenAContract: StarknetContract;
   let tokenBContract: StarknetContract;
   let account0: OpenZeppelinAccount;
+  let account1: OpenZeppelinAccount;
 
   async function accountTokenAB() {
     const { balance: balanceTokenA } = await tokenAContract.call("balanceOf", {
@@ -34,6 +32,7 @@ describe("Amm pair mint", function () {
     // await hardhatCompile("contracts/l0k_pair.cairo");
 
     account0 = await envAccountOZ(0);
+    account1 = await envAccountOZ(1);
 
     const contractFactory = await starknet.getContractFactory("l0k_pair");
     const erc20ContractFactory = await starknet.getContractFactory("l0k_erc20");
@@ -91,5 +90,17 @@ describe("Amm pair mint", function () {
     );
     console.log("balanceOfAccount:", balanceOfAccount);
     expect(uint256ToBN(balanceOfAccount).toNumber()).to.gt(0);
+  });
+
+  it("Test mint feeTo", async function () {
+    const { totalSupply } = await l0kPairContract.call("totalSupply", {});
+    console.warn("totalSupply:", totalSupply);
+
+    const { balance } = await l0kPairContract.call("balanceOf", {
+      account: account1.address,
+    });
+
+    console.log("balanceOfFeeTo:", balance);
+    // expect(uint256ToBN(balanceOfAccount).toNumber()).to.gt(0);
   });
 });

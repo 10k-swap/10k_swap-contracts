@@ -86,8 +86,11 @@ describe("Test helper", function () {
     console.warn("res:", res);
   });
 
-  it("Test test_uint256_rsm", async function () {
-    const { res } = await testHelperContract.call("test_uint256_rsm", {});
+  it("Test test_SafeUint256_mul", async function () {
+    const a = bnToUint256(2);
+    const b = bnToUint256(4);
+
+    const { res } = await testHelperContract.call("test_SafeUint256_mul", { a, b });
 
     console.warn("res:", res);
   });

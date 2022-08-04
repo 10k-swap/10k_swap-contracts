@@ -7,6 +7,7 @@ from starkware.cairo.common.uint256 import (
     uint256_sqrt,
     uint256_le,
     uint256_lt,
+    uint256_eq,
 )
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
@@ -24,7 +25,6 @@ from openzeppelin.token.erc20.library import ERC20, ERC20_total_supply, ERC20_ba
 from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
 
 from warplib.maths.div import warp_div256
-from warplib.maths.mul import warp_mul256
 from warplib.maths.mod import warp_mod
 from warplib.maths.gt import warp_gt
 from warplib.maths.neq import warp_neq
@@ -334,19 +334,19 @@ func mint{
     let (amount0) = SafeUint256.sub_le(balance0, Uint256(reserve0, 0))
     let (amount1) = SafeUint256.sub_le(balance1, Uint256(reserve1, 0))
 
-    # let (feeOn) = _mintFee(reserve0, reserve1)
+    let (feeOn) = _mintFee(reserve0, reserve1)
     let (totalSupply : Uint256) = ERC20.total_supply()
 
-    let (zero_total_supply) = bitwise_or(totalSupply.low, totalSupply.high)  # 0|0=0  0|1=1  1|0=1  1|1=1
-    if zero_total_supply == 0:
-        let (n) = warp_mul256(amount0, amount1)
-        let (sq : Uint256) = uint256_sqrt(n)
+    let (zero_total_supply) = uint256_eq(totalSupply, Uint256(0, 0))
+    if zero_total_supply == TRUE:
+        let (m0 : Uint256) = SafeUint256.mul(amount0, amount1)
+        let (sq : Uint256) = uint256_sqrt(m0)
         let (_liquidity : Uint256) = SafeUint256.sub_le(sq, Uint256(_MINIMUM_LIQUIDITY, 0))
 
         # permanently lock the first _MINIMUM_LIQUIDITY tokens
         _mint(0, Uint256(_MINIMUM_LIQUIDITY, 0))
 
-        _mint_part1(to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
+        _mint_part1(feeOn, to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
 
         ReentrancyGuard._end()
         return (_liquidity)
@@ -354,13 +354,13 @@ func mint{
         # a = amount0 * totalSupply / reserve0
         # b = amount1 * totalSupply / reserve1
         # liquidity = min(a, b)
-        let (a_lhs : Uint256) = warp_mul256(amount0, totalSupply)
+        let (a_lhs : Uint256) = SafeUint256.mul(amount0, totalSupply)
         let (a : Uint256) = warp_div256(a_lhs, Uint256(reserve0, 0))
-        let (b_lhs : Uint256) = warp_mul256(amount1, totalSupply)
+        let (b_lhs : Uint256) = SafeUint256.mul(amount1, totalSupply)
         let (b : Uint256) = warp_div256(b_lhs, Uint256(reserve1, 0))
         let (_liquidity : Uint256) = min_uint256(a, b)
 
-        _mint_part1(to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
+        _mint_part1(feeOn, to, amount0, amount1, _liquidity, balance0, balance1, reserve0, reserve1)
 
         ReentrancyGuard._end()
         return (_liquidity)
@@ -388,9 +388,9 @@ func burn{
     let (totalSupply : Uint256) = ERC20.total_supply()
 
     # using balances ensures pro-rata distribution
-    let (a0) = warp_mul256(liquidity, balance0)
+    let (a0) = SafeUint256.mul(liquidity, balance0)
     let (amount0) = warp_div256(a0, totalSupply)
-    let (a1) = warp_mul256(liquidity, balance1)
+    let (a1) = SafeUint256.mul(liquidity, balance1)
     let (amount1) = warp_div256(a1, totalSupply)
 
     # Insufficient liquidity burned
@@ -408,8 +408,8 @@ func burn{
     let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
     _update(balance0, balance1, reserve0, reserve1)
 
-    # TODO
-    # if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+    _kLast_update(feeOn)
+
     let (sender) = get_caller_address()
     Burn.emit(sender, amount0, amount1, to)
 
@@ -461,7 +461,7 @@ func swap{
     _swap_Transfer(token0, to, amount0Out)
     _swap_Transfer(token1, to, amount1Out)
 
-    # TODO. Not implemented safeTransfer
+    # TODO. Not implemented uniswapV2Call
     # if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
 
     let (self) = get_contract_address()
@@ -481,17 +481,17 @@ func swap{
     end
 
     with_attr error_message("10kSwap: K"):
-        let (b0 : Uint256) = warp_mul256(balance0, Uint256(1000, 0))
-        let (a0 : Uint256) = warp_mul256(amount0In, Uint256(3, 0))
+        let (b0 : Uint256) = SafeUint256.mul(balance0, Uint256(1000, 0))
+        let (a0 : Uint256) = SafeUint256.mul(amount0In, Uint256(3, 0))
         let (balance0Adjusted : Uint256) = SafeUint256.sub_le(b0, a0)
 
-        let (b1 : Uint256) = warp_mul256(balance1, Uint256(1000, 0))
-        let (a1 : Uint256) = warp_mul256(amount1In, Uint256(3, 0))
+        let (b1 : Uint256) = SafeUint256.mul(balance1, Uint256(1000, 0))
+        let (a1 : Uint256) = SafeUint256.mul(amount1In, Uint256(3, 0))
         let (balance1Adjusted : Uint256) = SafeUint256.sub_le(b1, a1)
 
-        let (m0) = warp_mul256(balance0Adjusted, balance1Adjusted)
-        let (m1_0) = warp_mul256(Uint256(reserve0, 0), Uint256(reserve1, 0))
-        let (m1) = warp_mul256(m1_0, Uint256(1000 ** 2, 0))
+        let (m0) = SafeUint256.mul(balance0Adjusted, balance1Adjusted)
+        let (m1_0) = SafeUint256.mul(Uint256(reserve0, 0), Uint256(reserve1, 0))
+        let (m1) = SafeUint256.mul(m1_0, Uint256(1000 ** 2, 0))
 
         let (is_lt) = uint256_lt(m0, m1)
 
@@ -565,6 +565,7 @@ end
 func _mint_part1{
     syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
 }(
+    feeOn : felt,
     to : felt,
     amount0 : Uint256,
     amount1 : Uint256,
@@ -583,8 +584,8 @@ func _mint_part1{
     _mint(to, liquidity)
 
     _update(balance0, balance1, reserve0, reserve1)
-    # Todo
-    # if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
+
+    _kLast_update(feeOn)
 
     let (sender) = get_caller_address()
     Mint.emit(sender, amount0, amount1)
@@ -628,8 +629,8 @@ func _update{
 
         # * never overflows, and + overflow is desired
         # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
-        let (p0 : Uint256) = warp_mul256(Uint256(u0, 0), Uint256(timeElapsed, 0))
-        let (p1 : Uint256) = warp_mul256(Uint256(u1, 0), Uint256(timeElapsed, 0))
+        let (p0 : Uint256) = SafeUint256.mul(Uint256(u0, 0), Uint256(timeElapsed, 0))
+        let (p1 : Uint256) = SafeUint256.mul(Uint256(u1, 0), Uint256(timeElapsed, 0))
         let (p0CumulativeLast : Uint256) = warp_add256(p0, price0CumulativeLast)
         let (p1CumulativeLast : Uint256) = warp_add256(p1, price1CumulativeLast)
         _price0CumulativeLast.write(p0CumulativeLast)
@@ -662,6 +663,8 @@ end
 func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reserve0 : felt, reserve1 : felt
 ) -> (feeOn : felt):
+    alloc_locals
+
     let (factory) = _factory.read()
     let (kLast : Uint256) = _kLast.read()
     let (totalSupply : Uint256) = ERC20.total_supply()
@@ -669,6 +672,11 @@ func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 
     let (notFeeOn) = is_le_felt(feeTo, 0)
     let (notKLast) = uint256_le(kLast, Uint256(0, 0))
+
+    # storage
+    local _syscall_ptr : felt* = syscall_ptr
+    local _pedersen_ptr : HashBuiltin* = pedersen_ptr
+    local _range_check_ptr = range_check_ptr
 
     if notFeeOn == FALSE:
         if notKLast == FALSE:
@@ -691,15 +699,19 @@ func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
                 end
             end
         end
-
-        return (feeOn=TRUE)
     else:
         if notKLast == FALSE:
             _kLast.write(Uint256(0, 0))
         end
-
-        return (feeOn=FALSE)
     end
+
+    # Popup storage
+    tempvar syscall_ptr = _syscall_ptr
+    tempvar pedersen_ptr = _pedersen_ptr
+    tempvar range_check_ptr = _range_check_ptr
+
+    # Reverse eturn
+    return (1 - notFeeOn)
 end
 
 func _mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -754,6 +766,22 @@ func _burn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     ERC20_total_supply.write(new_supply)
     Transfer.emit(account, 0, amount)
     return ()
+end
+
+func _kLast_update{
+    syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
+}(feeOn : felt) -> ():
+    if feeOn == TRUE:
+        # _reserve0 and _reserve1 are up-to-date
+        let (reserve0) = _reserve0.read()
+        let (reserve1) = _reserve1.read()
+        let (r0xr1) = SafeUint256.mul(Uint256(reserve0, 0), Uint256(reserve1, 0))
+        _kLast.write(r0xr1)
+
+        return ()
+    else:
+        return ()
+    end
 end
 
 func _swap_Transfer{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
