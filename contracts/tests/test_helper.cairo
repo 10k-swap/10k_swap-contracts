@@ -71,10 +71,20 @@ func test_SafeUint256_mul{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
 ) -> (res : Uint256):
     alloc_locals
 
+    foo(5)
+
     if 1 == 0:
         return (res=Uint256(0, 0))
     else:
         let (res) = SafeUint256.mul(a, b)
         return (res=res)
     end
+end
+
+func foo(n):
+    if n == 0:
+        return ()
+    end
+    foo(n=n - 1)
+    return ()
 end

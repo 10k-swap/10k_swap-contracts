@@ -641,10 +641,12 @@ func _update{
         tempvar syscall_ptr = syscall_ptr
         tempvar pedersen_ptr = pedersen_ptr
         tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr
     else:
         tempvar syscall_ptr = syscall_ptr
         tempvar pedersen_ptr = pedersen_ptr
         tempvar range_check_ptr = range_check_ptr
+        tempvar bitwise_ptr = bitwise_ptr
     end
 
     # Stroage
@@ -659,6 +661,17 @@ func _update{
     return ()
 end
 
+@event
+func RootK(
+    reserve0 : felt,
+    reserve1 : felt,
+    m0 : Uint256,
+    kLast : Uint256,
+    rootK : Uint256,
+    rootKLast : Uint256,
+):
+end
+
 # if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
 func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reserve0 : felt, reserve1 : felt
@@ -667,25 +680,23 @@ func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 
     let (factory) = _factory.read()
     let (kLast : Uint256) = _kLast.read()
-    let (totalSupply : Uint256) = ERC20.total_supply()
     let (feeTo) = Il0kFactory.feeTo(contract_address=factory)
 
     let (notFeeOn) = is_le_felt(feeTo, 0)
-    let (notKLast) = uint256_le(kLast, Uint256(0, 0))
+    let feeOn = 1 - notFeeOn
+    let (zeroKLast) = uint256_eq(kLast, Uint256(0, 0))
 
-    # storage
-    local _syscall_ptr : felt* = syscall_ptr
-    local _pedersen_ptr : HashBuiltin* = pedersen_ptr
-    local _range_check_ptr = range_check_ptr
-
-    if notFeeOn == FALSE:
-        if notKLast == FALSE:
+    if feeOn == TRUE:
+        if zeroKLast == FALSE:
             let (m0 : Uint256) = SafeUint256.mul(Uint256(reserve0, 0), Uint256(reserve1, 0))
             let (rootK : Uint256) = uint256_sqrt(m0)
             let (rootKLast : Uint256) = uint256_sqrt(kLast)
 
+            RootK.emit(reserve0, reserve1, m0, kLast, rootK, rootKLast)
+
             let (is_le) = uint256_le(rootK, rootKLast)
             if is_le == FALSE:
+                let (totalSupply : Uint256) = ERC20.total_supply()
                 let (s1 : Uint256) = SafeUint256.sub_le(rootK, rootKLast)
                 let (numerator : Uint256) = SafeUint256.mul(totalSupply, s1)
 
@@ -696,22 +707,26 @@ func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
                 let (liquidity_le_zero) = uint256_le(liquidity, Uint256(0, 0))
                 if liquidity_le_zero == FALSE:
                     _mint(feeTo, liquidity)
+
+                    return (feeOn)
                 end
+
+                return (feeOn)
             end
+
+            return (feeOn)
         end
+
+        return (feeOn)
     else:
-        if notKLast == FALSE:
+        if zeroKLast == FALSE:
             _kLast.write(Uint256(0, 0))
+
+            return (feeOn)
         end
+
+        return (feeOn)
     end
-
-    # Popup storage
-    tempvar syscall_ptr = _syscall_ptr
-    tempvar pedersen_ptr = _pedersen_ptr
-    tempvar range_check_ptr = _range_check_ptr
-
-    # Reverse eturn
-    return (1 - notFeeOn)
 end
 
 func _mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
