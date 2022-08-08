@@ -190,4 +190,29 @@ namespace l0kLibrary:
 
         return (amountIn=amountIn)
     end
+
+    # performs chained getAmountOut calculations on any number of pairs
+    func getAmountsOut{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        factory : felt, pairClass : felt, amountIn : Uint256, path_len : felt, path : felt*
+    ) -> (amounts_len : felt, amounts : Uint256*):
+        alloc_locals
+
+        # Invalid_path
+        with_attr error_message("10kSwapLibrary: IP"):
+            let (le) = is_le_felt(2, path_len)
+            assert le = TRUE
+        end
+
+        local amounts_len = 0
+        
+
+        # amounts = new uint[](path.length);
+        # amounts[0] = amountIn;
+        # for (uint i; i < path.length - 1; i++) {
+        #     (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);
+        #     amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+        # }
+
+        return (amountIn=amountIn)
+    end
 end

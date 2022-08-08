@@ -4,8 +4,7 @@ from starkware.cairo.common.cairo_builtins import HashBuiltin
 from starkware.cairo.common.bool import FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
-from starkware.starknet.common.syscalls import get_caller_address
-from starkware.starknet.common.syscalls import deploy
+from starkware.starknet.common.syscalls import get_caller_address, deploy
 from starkware.cairo.common.hash import hash2
 
 from interfaces.Il0kPair import Il0kPair
@@ -148,7 +147,7 @@ end
 @external
 func setFeeTo{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(feeTo : felt) -> (
     ):
-    onlyFeeToSetter()
+    _onlyFeeToSetter()
     _feeTo.write(feeTo)
     return ()
 end
@@ -157,7 +156,7 @@ end
 func setFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     feeToSetter : felt
 ) -> ():
-    onlyFeeToSetter()
+    _onlyFeeToSetter()
     _feeToSetter.write(feeToSetter)
     return ()
 end
@@ -166,7 +165,7 @@ end
 # Internal
 #
 
-func onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
+func _onlyFeeToSetter{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
     let (caller) = get_caller_address()
     let (feeToSetter) = _feeToSetter.read()
     # Forbidden
