@@ -1,9 +1,19 @@
 import { expect } from "chai";
 import { starknet } from "hardhat";
-import { OpenZeppelinAccount, StarknetContract } from "hardhat/types";
+import {
+  OpenZeppelinAccount,
+  StarknetContract,
+  StarknetContractFactory,
+} from "hardhat/types";
+import { ContractFactory } from "starknet";
 import { bnToUint256 } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
-import { ensureEnvVar, envAccountOZ, hardhatCompile } from "./util";
+import {
+  computePairAddress,
+  ensureEnvVar,
+  envAccountOZ,
+  hardhatCompile,
+} from "./util";
 
 describe("Amm router", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
@@ -12,6 +22,7 @@ describe("Amm router", function () {
   const PAIR_CONTRACT_CLASS_HASH = ensureEnvVar("PAIR_CONTRACT_CLASS_HASH");
   const FACTORY_CONTRACT_ADDRESS = ensureEnvVar("FACTORY_CONTRACT_ADDRESS");
 
+  let l0kPairContractFactory: StarknetContractFactory;
   let l0kRouterContract: StarknetContract;
   let tokenAContract: StarknetContract;
   let tokenBContract: StarknetContract;
@@ -28,6 +39,7 @@ describe("Amm router", function () {
     account0 = await envAccountOZ(0);
     account1 = await envAccountOZ(1);
 
+    l0kPairContractFactory = await starknet.getContractFactory("l0k_pair");
     const contractFactory = await starknet.getContractFactory("l0k_router");
     l0kRouterContract = await contractFactory.deploy({
       factory: FACTORY_CONTRACT_ADDRESS,
@@ -41,6 +53,19 @@ describe("Amm router", function () {
   });
 
   it("Test addLiquidity", async function () {
+    const pair = computePairAddress(
+      FACTORY_CONTRACT_ADDRESS,
+      PAIR_CONTRACT_CLASS_HASH,
+      TOKEN_A,
+      TOKEN_B
+    );
+    const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
+
+    const { balance: balanceBefore } = await l0kPairContract.call("balanceOf", {
+      account: account0.address,
+    });
+    console.warn("balanceBefore:", balanceBefore);
+
     const amountA = bnToUint256(1000000);
     const amountB = bnToUint256(100000);
 
@@ -63,10 +88,10 @@ describe("Amm router", function () {
           tokenB: TOKEN_B,
           amountADesired: amountA,
           amountBDesired: amountB,
-          amountAMin: amountA,
-          amountBMin: amountB,
+          amountAMin: bnToUint256(800000),
+          amountBMin: bnToUint256(80000),
           to: account0.address,
-          deadline: 3000000000,
+          deadline: parseInt(new Date().getTime() / 1000 + "") + 30000,
         },
       },
     ];
@@ -74,6 +99,11 @@ describe("Amm router", function () {
     const hash = await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
     console.warn("hash:", hash);
+
+    const { balance: balanceAfter } = await l0kPairContract.call("balanceOf", {
+      account: account0.address,
+    });
+    console.warn("balanceAfter:", balanceAfter);
 
     // const contractFactory = await starknet.getContractFactory("l0k_router");
     // const pairContractClassHash = await contractFactory.declare();

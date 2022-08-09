@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import { command } from "execa";
 import { starknet } from "hardhat";
-import { ArgentAccount, OpenZeppelinAccount } from "hardhat/types";
-import { toFelt } from "starknet/dist/utils/number";
-import { MAX_FEE } from "./constants";
+import { OpenZeppelinAccount } from "hardhat/types";
+import { number, shortString } from "starknet";
+import { computeHashOnElements, pedersen } from "starknet/dist/utils/hash";
+import { BigNumberish, toFelt } from "starknet/dist/utils/number";
 
 export function expectFeeEstimationStructure(fee: any) {
   console.log("Estimated fee:", fee);
@@ -83,4 +84,36 @@ export async function envAccountOZ(index: number) {
   }
 
   return account;
+}
+
+// Compute pair contract address
+export function computePairAddress(
+  factory: BigNumberish,
+  pairClass: BigNumberish,
+  tokenA: BigNumberish,
+  tokenB: BigNumberish
+) {
+  const CONTRACT_ADDRESS_PREFIX = shortString.encodeShortString(
+    "STARKNET_CONTRACT_ADDRESS"
+  );
+
+  let token0 = tokenA,
+    token1 = tokenB;
+  const gt = number.toBN(tokenA).gt(number.toBN(tokenB));
+  if (gt) {
+    token0 = tokenB;
+    token1 = tokenA;
+  }
+
+  const salt = pedersen([token0, token1]);
+  const constructorCalldataHash = computeHashOnElements([]);
+  const pair = computeHashOnElements([
+    CONTRACT_ADDRESS_PREFIX,
+    factory,
+    salt,
+    pairClass,
+    constructorCalldataHash,
+  ]);
+
+  return pair;
 }

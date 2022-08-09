@@ -4,7 +4,12 @@ import { OpenZeppelinAccount, StarknetContract } from "hardhat/types/runtime";
 import { shortString } from "starknet";
 import { computeHashOnElements, pedersen } from "starknet/dist/utils/hash";
 import { MAX_FEE } from "./constants";
-import { ensureEnvVar, envAccountOZ, hardhatCompile } from "./util";
+import {
+  computePairAddress,
+  ensureEnvVar,
+  envAccountOZ,
+  hardhatCompile,
+} from "./util";
 
 describe("Amm factory", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
@@ -66,19 +71,12 @@ describe("Amm factory", function () {
     token0 = event0.data[0];
     token1 = event0.data[1];
 
-    // Compute pair contract address
-    const CONTRACT_ADDRESS_PREFIX = shortString.encodeShortString(
-      "STARKNET_CONTRACT_ADDRESS"
-    );
-    const salt = pedersen([token0, token1]);
-    const constructorCalldataHash = computeHashOnElements([]);
-    pair0Address = computeHashOnElements([
-      CONTRACT_ADDRESS_PREFIX,
+    const pair0Address = computePairAddress(
       l0kFactoryContract.address,
-      salt,
       PAIR_CONTRACT_CLASS_HASH,
-      constructorCalldataHash,
-    ]);
+      TOKEN_A,
+      TOKEN_B
+    );
     console.log("pair0Address:", pair0Address);
 
     expect(BigInt(token0)).to.equal(
