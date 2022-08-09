@@ -1,6 +1,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.uint256 import (
     Uint256,
     uint256_check,
@@ -71,8 +72,6 @@ func test_SafeUint256_mul{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
 ) -> (res : Uint256):
     alloc_locals
 
-    foo(5)
-
     if 1 == 0:
         return (res=Uint256(0, 0))
     else:
@@ -81,10 +80,34 @@ func test_SafeUint256_mul{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, rang
     end
 end
 
-func foo(n):
-    if n == 0:
-        return ()
-    end
-    foo(n=n - 1)
-    return ()
+@view
+func test_array{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    res_len : felt, res : felt*
+):
+    alloc_locals
+
+    let path_len = 4
+    let (local path : felt*) = alloc()
+    assert path[0] = 1
+    assert path[1] = 2
+    assert path[2] = 3
+    assert path[3] = 4
+
+    let amountIn = 1
+    let (local amounts : felt*) = alloc()
+    assert amounts[0] = amountIn
+
+    # === Start loop ===
+    tempvar reverse_idx = path_len - 1
+
+    loop:
+    tempvar i = path_len - reverse_idx - 1
+
+    assert amounts[i + 1] = path[i] + path[i + 1]
+
+    tempvar reverse_idx = reverse_idx - 1
+    jmp loop if reverse_idx != 0
+    # === END loop ===
+
+    return (res_len=path_len, res=amounts)
 end

@@ -661,17 +661,6 @@ func _update{
     return ()
 end
 
-@event
-func RootK(
-    reserve0 : felt,
-    reserve1 : felt,
-    m0 : Uint256,
-    kLast : Uint256,
-    rootK : Uint256,
-    rootKLast : Uint256,
-):
-end
-
 # if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
 func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     reserve0 : felt, reserve1 : felt
@@ -691,8 +680,6 @@ func _mintFee{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
             let (m0 : Uint256) = SafeUint256.mul(Uint256(reserve0, 0), Uint256(reserve1, 0))
             let (rootK : Uint256) = uint256_sqrt(m0)
             let (rootKLast : Uint256) = uint256_sqrt(kLast)
-
-            RootK.emit(reserve0, reserve1, m0, kLast, rootK, rootKLast)
 
             let (is_le) = uint256_le(rootK, rootKLast)
             if is_le == FALSE:

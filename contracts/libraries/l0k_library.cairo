@@ -3,6 +3,7 @@
 %lang starknet
 
 from starkware.cairo.common.cairo_builtins import HashBuiltin
+from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.uint256 import Uint256, uint256_le
 from starkware.cairo.common.math_cmp import is_le_felt
@@ -182,7 +183,7 @@ namespace l0kLibrary:
 
         # denominator = (reserveOut - amountOut) * 997
         let (s1 : Uint256) = SafeUint256.sub_le(Uint256(reserveOut, 0), amountOut)
-        let (denominator : Uint256) = SafeUint256.mul(s1, Uint256(997))
+        let (denominator : Uint256) = SafeUint256.mul(s1, Uint256(997, 0))
 
         # amountIn = numerator / denominator + 1
         let (m2 : Uint256) = warp_div256(numerator, denominator)
@@ -203,16 +204,55 @@ namespace l0kLibrary:
             assert le = TRUE
         end
 
-        local amounts_len = 0
-        
+        let (local amounts : Uint256*) = alloc()
+        assert amounts[0] = amountIn
 
-        # amounts = new uint[](path.length);
-        # amounts[0] = amountIn;
-        # for (uint i; i < path.length - 1; i++) {
-        #     (uint reserveIn, uint reserveOut) = getReserves(factory, path[i], path[i + 1]);
-        #     amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
-        # }
+        # *** Start loop ***
+        tempvar reverse_idx = path_len - 1
 
-        return (amountIn=amountIn)
+        loop:
+        tempvar i = path_len - reverse_idx - 1
+
+        let (reserveIn, reserveOut) = getReserves(factory, pairClass, path[i], path[i + 1])
+        let (amountOut) = getAmountOut(amounts[i], reserveIn, reserveOut)
+        assert amounts[i + 1] = amountOut
+
+        tempvar reverse_idx = reverse_idx - 1
+        jmp loop if reverse_idx != 0
+        # *** End loop ***
+
+        return (amounts_len=path_len, amounts=amounts)
+    end
+
+    # performs chained getAmountIn calculations on any number of pairs
+    func getAmountsIn{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+        factory : felt, pairClass : felt, amountOut : Uint256, path_len : felt, path : felt*
+    ) -> (amounts_len : felt, amounts : Uint256*):
+        alloc_locals
+
+        # Invalid_path
+        with_attr error_message("10kSwapLibrary: IP"):
+            let (le) = is_le_felt(2, path_len)
+            assert le = TRUE
+        end
+
+        let (local amounts : Uint256*) = alloc()
+        assert amounts[path_len - 1] = amountOut
+
+        # *** Start loop ***
+        tempvar reverse_idx = path_len - 1
+
+        loop:
+        tempvar i = reverse_idx
+
+        let (reserveIn, reserveOut) = getReserves(factory, pairClass, path[i - 1], path[i])
+        let (amountIn) = getAmountIn(amounts[i], reserveIn, reserveOut)
+        assert amounts[i - 1] = amountIn
+
+        tempvar reverse_idx = reverse_idx - 1
+        jmp loop if reverse_idx != 0
+        # *** End loop ***
+
+        return (amounts_len=path_len, amounts=amounts)
     end
 end
