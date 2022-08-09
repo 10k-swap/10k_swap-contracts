@@ -22,14 +22,6 @@ from interfaces.Il0kPair import Il0kPair
 from libraries.l0k_library import l0kLibrary
 
 #
-# Events
-#
-
-@event
-func PairCreated(token0 : felt, token1 : felt, pair : felt, index : felt):
-end
-
-#
 # Storage
 #
 

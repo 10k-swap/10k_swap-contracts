@@ -1,6 +1,8 @@
 import { expect } from "chai";
 import { starknet } from "hardhat";
 import { OpenZeppelinAccount, StarknetContract } from "hardhat/types";
+import { bnToUint256 } from "starknet/dist/utils/uint256";
+import { MAX_FEE } from "./constants";
 import { ensureEnvVar, envAccountOZ, hardhatCompile } from "./util";
 
 describe("Amm router", function () {
@@ -11,6 +13,8 @@ describe("Amm router", function () {
   const FACTORY_CONTRACT_ADDRESS = ensureEnvVar("FACTORY_CONTRACT_ADDRESS");
 
   let l0kRouterContract: StarknetContract;
+  let tokenAContract: StarknetContract;
+  let tokenBContract: StarknetContract;
   let account0: OpenZeppelinAccount;
   let account1: OpenZeppelinAccount;
   let token0: string;
@@ -29,11 +33,48 @@ describe("Amm router", function () {
       factory: FACTORY_CONTRACT_ADDRESS,
       pairClass: PAIR_CONTRACT_CLASS_HASH,
     });
+    const erc20ContractFactory = await starknet.getContractFactory("l0k_erc20");
+    tokenAContract = erc20ContractFactory.getContractAt(TOKEN_A);
+    tokenBContract = erc20ContractFactory.getContractAt(TOKEN_B);
 
     console.log("l0kRouterContract.address:", l0kRouterContract.address);
   });
 
   it("Test addLiquidity", async function () {
+    const amountA = bnToUint256(1000000);
+    const amountB = bnToUint256(100000);
+
+    const invokeArray = [
+      {
+        toContract: tokenAContract,
+        functionName: "approve",
+        calldata: { spender: l0kRouterContract.address, amount: amountA },
+      },
+      {
+        toContract: tokenBContract,
+        functionName: "approve",
+        calldata: { spender: l0kRouterContract.address, amount: amountB },
+      },
+      {
+        toContract: l0kRouterContract,
+        functionName: "addLiquidity",
+        calldata: {
+          tokenA: TOKEN_A,
+          tokenB: TOKEN_B,
+          amountADesired: amountA,
+          amountBDesired: amountB,
+          amountAMin: amountA,
+          amountBMin: amountB,
+          to: account0.address,
+          deadline: 3000000000,
+        },
+      },
+    ];
+
+    const hash = await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
+
+    console.warn("hash:", hash);
+
     // const contractFactory = await starknet.getContractFactory("l0k_router");
     // const pairContractClassHash = await contractFactory.declare();
     // console.log("pairContractClassHash: ", pairContractClassHash);
