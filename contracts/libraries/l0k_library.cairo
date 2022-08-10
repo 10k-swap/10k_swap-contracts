@@ -43,22 +43,21 @@ namespace l0kLibrary:
         end
 
         let (is_le) = is_le_felt(tokenA, tokenB)
-        local token0 : felt
-        local token1 : felt
         if is_le == TRUE:
-            token0 = tokenA
-            token1 = tokenB
+            # Zero address
+            with_attr error_message("10kSwap: ZA"):
+                assert_not_zero(tokenA)
+            end
+
+            return (token0=tokenA, token1=tokenB)
         else:
-            token0 = tokenB
-            token1 = tokenA
-        end
+            # Zero address
+            with_attr error_message("10kSwap: ZA"):
+                assert_not_zero(tokenB)
+            end
 
-        # Zero address
-        with_attr error_message("10kSwap: ZA"):
-            assert_not_zero(token0)
+            return (token0=tokenB, token1=tokenA)
         end
-
-        return (token0=token0, token1=token1)
     end
 
     # calculates the contract address for a pair without making any external calls

@@ -53,17 +53,33 @@ namespace Il0kRouter:
     ) -> (amountA : Uint256, amountB : Uint256):
     end
 
-    # Todo
-    func swapExactTokensForTokens() -> (totalSupply : Uint256):
+    func swapExactTokensForTokens(
+        amountIn : Uint256,
+        amountOutMin : Uint256,
+        path_len : felt,
+        path : felt*,
+        to : felt,
+        deadline : felt,
+    ) -> (amounts_len : felt, amounts : Uint256*):
     end
 
-    # Todo
-    func swapTokensForExactTokens(account : felt) -> (balance : Uint256):
+    func swapTokensForExactTokens(
+        amountOut : Uint256,
+        amountInMax : Uint256,
+        path_len : felt,
+        path : felt*,
+        to : felt,
+        deadline : felt,
+    ) -> (amounts_len : felt, amounts : Uint256*):
     end
 
-    # Todo
-    func swapExactTokensForTokensSupportingFeeOnTransferTokens(account : felt) -> (
-        balance : Uint256
-    ):
+    func swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        amountIn : Uint256,
+        amountOutMin : Uint256,
+        path_len : felt,
+        path : felt*,
+        to : felt,
+        deadline : felt,
+    ) -> (balance : Uint256):
     end
 end

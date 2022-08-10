@@ -270,12 +270,16 @@ func swapExactTokensForTokensSupportingFeeOnTransferTokens{
     # TODO. Not implemented safeTransferFrom
     IERC20.transferFrom(contract_address=path[0], sender=caller, recipient=pair, amount=amountIn)
 
-    let (balanceBefore : Uint256) = IERC20.balanceOf(contract_address=path[path_len - 1], account=to)
+    let (balanceBefore : Uint256) = IERC20.balanceOf(
+        contract_address=path[path_len - 1], account=to
+    )
     _swapSupportingFeeOnTransferTokens(path_len, path, to)
 
     # Insufficient output amount
     with_attr error_message("10kSwapRouter: IOA"):
-        let (balanceAfter : Uint256) = IERC20.balanceOf(contract_address=path[path_len - 1], account=to)
+        let (balanceAfter : Uint256) = IERC20.balanceOf(
+            contract_address=path[path_len - 1], account=to
+        )
         let (balanceDiff) = SafeUint256.sub_le(balanceAfter, balanceBefore)
         let (r_le) = uint256_le(amountOutMin, balanceDiff)
         assert r_le = TRUE
@@ -391,24 +395,26 @@ func _swap{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     let (pairClass) = _pairClass.read()
 
     # *** Start loop ***
-    tempvar reverse_idx = path_len
+    # Equal to: for (uint i; i < path_len - 1; i++)
+    tempvar next = 1
+    tempvar i = 0
 
     loop:
-    tempvar i = path_len - reverse_idx
-
     tempvar input = path[i]
     tempvar output = path[i + 1]
     let (token0, _) = l0kLibrary.sortTokens(input, output)
     tempvar amountOut = amounts[i + 1]
 
     let (amount0Out : Uint256, amount1Out : Uint256) = _swap_amountOuts(input, token0, amountOut)
-    let (to) = _swap_to(factory, pairClass, i, path_len, path[i + 2], output, _to)
+    let (to) = _swap_to(factory, pairClass, i, path_len, path, output, _to)
 
     let (pair) = l0kLibrary.pairFor(factory, pairClass, input, output)
     Il0kPair.swap(contract_address=pair, amount0Out=amount0Out, amount1Out=amount1Out, to=to)
 
-    tempvar reverse_idx = reverse_idx - 1
-    jmp loop if reverse_idx != 0
+    tempvar i = i + 1
+    tempvar next = path_len - 1 - i
+
+    jmp loop if next != 0
     # *** End loop ***
 
     return ()
@@ -429,7 +435,7 @@ func _swap_to{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
     pairClass : felt,
     i : felt,
     path_len : felt,
-    path_item : felt,
+    path : felt*,
     output : felt,
     _to : felt,
 ) -> (to : felt):
@@ -439,7 +445,7 @@ func _swap_to{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}
 
     # If i < path.length - 2
     if r_le == FALSE:
-        let (pair) = l0kLibrary.pairFor(factory, pairClass, output, path_item)
+        let (pair) = l0kLibrary.pairFor(factory, pairClass, output, path[i + 2])
         return (to=pair)
     else:
         return (to=_to)
@@ -458,11 +464,11 @@ func _swapSupportingFeeOnTransferTokens{
     let (pairClass) = _pairClass.read()
 
     # *** Start loop ***
-    tempvar reverse_idx = path_len
+    # Equal to: for (uint i; i < path.length - 1; i++)
+    tempvar next = 1
+    tempvar i = 0
 
     loop:
-    tempvar i = path_len - reverse_idx
-
     tempvar input = path[i]
     tempvar output = path[i + 1]
     let (token0, _) = l0kLibrary.sortTokens(input, output)
@@ -478,13 +484,15 @@ func _swapSupportingFeeOnTransferTokens{
     let (amountOutput) = l0kLibrary.getAmountOut(amountInput, reserveInput, reserveOutput)
 
     let (amount0Out : Uint256, amount1Out : Uint256) = _swap_amountOuts(input, token0, amountOutput)
-    let (to) = _swap_to(factory, pairClass, i, path_len, path[i + 2], output, _to)
+    let (to) = _swap_to(factory, pairClass, i, path_len, path, output, _to)
 
     let (pair) = l0kLibrary.pairFor(factory, pairClass, input, output)
     Il0kPair.swap(contract_address=pair, amount0Out=amount0Out, amount1Out=amount1Out, to=to)
 
-    tempvar reverse_idx = reverse_idx - 1
-    jmp loop if reverse_idx != 0
+    tempvar i = i + 1
+    tempvar next = path_len - 1 - i
+
+    jmp loop if next != 0
     # *** End loop ***
 
     return ()
