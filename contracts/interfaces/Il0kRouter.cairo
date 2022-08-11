@@ -9,25 +9,27 @@ namespace Il0kRouter:
     func factory() -> (factory : felt):
     end
 
-    func quote(amountA : Uint256, reserveA : Uint256, reserveB : Uint256) -> (amountB : Uint256):
+    func quote(amountA : Uint256, reserveA : felt, reserveB : felt) -> (amountB : Uint256):
     end
 
-    func getAmountOut(amountIn : Uint256, reserveIn : Uint256, reserveOut : Uint256) -> (
+    func getAmountOut(amountIn : Uint256, reserveIn : felt, reserveOut : felt) -> (
         amountOut : Uint256
     ):
     end
 
-    func getAmountIn(amountOut : Uint256, reserveIn : Uint256, reserveOut : Uint256) -> (
+    func getAmountIn(amountOut : Uint256, reserveIn : felt, reserveOut : felt) -> (
         amountIn : Uint256
     ):
     end
 
-    # Todo
-    func getAmountsOut() -> (amounts : Uint256*):
+    func getAmountsOut(amountIn : Uint256, path_len : felt, path : felt*) -> (
+        amounts_len : felt, amounts : Uint256*
+    ):
     end
 
-    # Todo
-    func getAmountsIn() -> (amounts : Uint256*):
+    func getAmountsIn(amountOut : Uint256, path_len : felt, path : felt*) -> (
+        amounts_len : felt, amounts : Uint256*
+    ):
     end
 
     func addLiquidity(
