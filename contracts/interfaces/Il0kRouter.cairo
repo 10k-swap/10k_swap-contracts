@@ -40,7 +40,7 @@ namespace Il0kRouter:
         amountAMin : Uint256,
         amountBMin : Uint256,
         to : felt,
-        deadline : Uint256,
+        deadline : felt,
     ) -> (amountA : Uint256, amountB : Uint256, liquidity : Uint256):
     end
 
@@ -51,7 +51,7 @@ namespace Il0kRouter:
         amountAMin : Uint256,
         amountBMin : Uint256,
         to : felt,
-        deadline : Uint256,
+        deadline : felt,
     ) -> (amountA : Uint256, amountB : Uint256):
     end
 
@@ -82,6 +82,6 @@ namespace Il0kRouter:
         path : felt*,
         to : felt,
         deadline : felt,
-    ) -> (balance : Uint256):
+    ):
     end
 end
