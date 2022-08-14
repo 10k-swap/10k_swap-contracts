@@ -40,7 +40,7 @@ describe("l0k_erc20", function () {
     const to = account0.address;
     const mintAmount = bnToUint256(utils.parseEther("1000") + "");
     await l0kErc20Contract.invoke(
-      "ownerMint",
+      "mint",
       {
         to,
         amount: mintAmount,
