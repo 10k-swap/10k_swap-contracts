@@ -8,8 +8,8 @@ from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_
 from starkware.starknet.common.syscalls import get_caller_address
 from starkware.starknet.common.syscalls import get_contract_address
 
-from openzeppelin.security.reentrancyguard import ReentrancyGuard
-from openzeppelin.security.safemath import SafeUint256
+from openzeppelin.security.reentrancyguard.library import ReentrancyGuard
+from openzeppelin.security.safemath.library import SafeUint256
 from openzeppelin.token.erc20.library import (
     ERC20,
     ERC20_name,
@@ -18,7 +18,7 @@ from openzeppelin.token.erc20.library import (
     ERC20_balances,
     Transfer,
 )
-from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
+from openzeppelin.token.erc20.IERC20 import IERC20
 
 #
 # ERC20 === start ===

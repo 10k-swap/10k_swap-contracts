@@ -19,10 +19,10 @@ from starkware.starknet.common.syscalls import (
     get_block_timestamp,
 )
 
-from openzeppelin.security.reentrancyguard import ReentrancyGuard
-from openzeppelin.security.safemath import SafeUint256
+from openzeppelin.security.reentrancyguard.library import ReentrancyGuard
+from openzeppelin.security.safemath.library import SafeUint256
 from openzeppelin.token.erc20.library import ERC20, ERC20_total_supply, ERC20_balances, Transfer
-from openzeppelin.token.erc20.interfaces.IERC20 import IERC20
+from openzeppelin.token.erc20.IERC20 import IERC20
 
 from warplib.maths.div import warp_div256
 from warplib.maths.mod import warp_mod

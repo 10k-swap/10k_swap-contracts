@@ -12,7 +12,8 @@ from starkware.cairo.common.uint256 import (
     uint256_lt,
     uint256_mul,
 )
-from openzeppelin.security.safemath import SafeUint256
+
+from openzeppelin.security.safemath.library import SafeUint256
 
 from warplib.maths.mul import warp_mul256
 

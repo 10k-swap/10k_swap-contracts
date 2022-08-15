@@ -1,0 +1,2 @@
+cairo-lang
+openzeppelin-cairo-contracts

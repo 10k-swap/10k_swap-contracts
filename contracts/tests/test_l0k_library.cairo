@@ -10,7 +10,8 @@ from starkware.cairo.common.uint256 import (
     uint256_le,
     uint256_lt,
 )
-from openzeppelin.security.safemath import SafeUint256
+
+from openzeppelin.security.safemath.library import SafeUint256
 
 from libraries.l0k_library import l0kLibrary
 

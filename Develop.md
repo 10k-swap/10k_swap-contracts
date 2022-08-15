@@ -29,16 +29,10 @@ sudo apt install -y libgmp3-dev
 brew install gmp
 ```
 
-- Install the `cairo-lang` python package using:
+- Install dependencies:
 
 ```shell
-pip3 install cairo-lang
-```
-
-- Install the `openzeppelin-cairo-contracts` package using:
-
-```shell
-pip install openzeppelin-cairo-contracts
+pip3 install --upgrade -r requirements.txt
 ```
 
 - Set `cairo-format` in Visual Studio Code: `"cairo.cairoFormatPath": "[Project Root Path]/cairo_venv/bin/cairo-format"`

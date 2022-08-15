@@ -10,7 +10,7 @@ from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_not_equal, assert_not_zero
 from starkware.cairo.common.hash import hash2
 
-from openzeppelin.security.safemath import SafeUint256
+from openzeppelin.security.safemath.library import SafeUint256
 
 from warplib.maths.div import warp_div256
 
