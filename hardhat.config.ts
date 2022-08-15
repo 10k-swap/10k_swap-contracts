@@ -16,7 +16,7 @@ const config: HardhatUserConfig = {
     // uses the currently active Python environment (hopefully with available Starknet commands!)
     // venv: "active",
     // network: "alpha",
-    network: "devnet",
+    network: "alpha",
     wallets: {
       OpenZeppelin: {
         accountName: "OpenZeppelin",
@@ -31,6 +31,7 @@ const config: HardhatUserConfig = {
     timeout: 6000000,
   },
   networks: {
+    "goerli-alpha": { url: "https://alpha4.starknet.io" },
     devnet: {
       url: "http://127.0.0.1:5050",
       args: ["--lite-mode", "--gas-price", "2000000000"],

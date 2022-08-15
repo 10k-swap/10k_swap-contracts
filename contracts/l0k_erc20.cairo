@@ -8,7 +8,6 @@ from starkware.cairo.common.bool import TRUE
 from starkware.starknet.common.syscalls import get_caller_address
 
 from openzeppelin.token.erc20.library import ERC20
-from openzeppelin.access.ownable import Ownable
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
@@ -16,7 +15,6 @@ func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 ):
     let (owner) = get_caller_address()
     ERC20.initializer(name, symbol, 18)
-    Ownable.initializer(owner)
     return ()
 end
 
@@ -113,24 +111,9 @@ func decreaseAllowance{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_c
 end
 
 @external
-func transferOwnership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    newOwner : felt
-):
-    Ownable.transfer_ownership(newOwner)
-    return ()
-end
-
-@external
-func renounceOwnership{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}():
-    Ownable.renounce_ownership()
-    return ()
-end
-
-@external
-func ownerMint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
+func mint{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     to : felt, amount : Uint256
 ):
-    Ownable.assert_only_owner()
     ERC20._mint(to, amount)
     return ()
 end
