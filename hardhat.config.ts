@@ -25,6 +25,7 @@ const config: HardhatUserConfig = {
         accountPath: "~/.starknet_accounts",
       },
     },
+    recompile: false
   },
   mocha: {
     timeout: 6000000,
