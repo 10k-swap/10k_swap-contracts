@@ -282,6 +282,17 @@ func kLast{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() 
     return (kLast=value)
 end
 
+@view
+func getReserves{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    reserve0 : felt, reserve1 : felt, blockTimestampLast : felt
+):
+    let (reserve0) = _reserve0.read()
+    let (reserve1) = _reserve1.read()
+    let (blockTimestampLast) = _blockTimestampLast.read()
+
+    return (reserve0=reserve0, reserve1=reserve1, blockTimestampLast=blockTimestampLast)
+end
+
 #
 # Externals
 #
@@ -303,17 +314,6 @@ func initialize{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
     ERC20.initializer('10kSwap Pair Token', 'LPT', 18)
 
     return ()
-end
-
-@external
-func getReserves{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
-    reserve0 : felt, reserve1 : felt, blockTimestampLast : felt
-):
-    let (reserve0) = _reserve0.read()
-    let (reserve1) = _reserve1.read()
-    let (blockTimestampLast) = _blockTimestampLast.read()
-
-    return (reserve0=reserve0, reserve1=reserve1, blockTimestampLast=blockTimestampLast)
 end
 
 # this low-level function should be called from a contract which performs important safety checks
