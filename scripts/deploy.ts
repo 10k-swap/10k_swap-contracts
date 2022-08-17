@@ -1,8 +1,5 @@
-import { utils } from "ethers";
 import { starknet } from "hardhat";
-import { toFelt } from "starknet/dist/utils/number";
-import { bnToUint256 } from "starknet/dist/utils/uint256";
-import { ensureEnvVar, hardhatCompile, stringToFelt } from "../test/util";
+import { hardhatCompile, stringToFelt } from "../test/util";
 
 async function main() {
   await hardhatCompile("contracts/l0k_erc20.cairo");
@@ -10,7 +7,7 @@ async function main() {
   await hardhatCompile("contracts/l0k_factory.cairo");
   await hardhatCompile("contracts/l0k_router.cairo");
 
-  const feeToSetter = ensureEnvVar("FEE_TO_SETTER");
+  const feeToSetter = process.env["FEE_TO_SETTER"] || 0;
 
   const l0kErc20ContractFactory = await starknet.getContractFactory(
     "l0k_erc20"
@@ -23,14 +20,14 @@ async function main() {
     "l0k_router"
   );
 
-  // Deplo tokenA
+  // Deploy tokenA
   const tokenAContract = await l0kErc20ContractFactory.deploy({
     name: stringToFelt("10K Swap A"),
     symbol: stringToFelt("TKA"),
   });
   console.log("tokenAContract:", tokenAContract.address);
 
-  // Deplo tokenB
+  // Deploy tokenB
   const tokenBContract = await l0kErc20ContractFactory.deploy({
     name: stringToFelt("10K Swap B"),
     symbol: stringToFelt("TKB"),
