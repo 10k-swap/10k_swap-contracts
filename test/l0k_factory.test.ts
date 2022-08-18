@@ -71,7 +71,7 @@ describe("Amm factory", function () {
     token0 = event0.data[0];
     token1 = event0.data[1];
 
-    const pair0Address = computePairAddress(
+    pair0Address = computePairAddress(
       l0kFactoryContract.address,
       PAIR_CONTRACT_CLASS_HASH,
       TOKEN_A,
@@ -102,6 +102,7 @@ describe("Amm factory", function () {
       token0,
       token1,
     });
+
     const { pair: allPairs0 } = await l0kFactoryContract.call("allPairs", {
       index: pairLength - 1,
     });

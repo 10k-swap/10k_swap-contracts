@@ -3,9 +3,9 @@ import { starknet } from "hardhat";
 import {
   OpenZeppelinAccount,
   StarknetContract,
-  StarknetContractFactory,
+  StarknetContractFactory
 } from "hardhat/types";
-import { ContractFactory } from "starknet";
+import { stark } from "starknet";
 import { toFelt } from "starknet/dist/utils/number";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
@@ -13,7 +13,7 @@ import {
   computePairAddress,
   ensureEnvVar,
   envAccountOZ,
-  hardhatCompile,
+  hardhatCompile
 } from "./util";
 
 describe("Amm router", function () {
@@ -30,10 +30,6 @@ describe("Amm router", function () {
   let tokenBContract: StarknetContract;
   let account0: OpenZeppelinAccount;
   let account1: OpenZeppelinAccount;
-  let token0: string;
-  let token1: string;
-  let pair0Address: string;
-  let pairLength = 0;
 
   function getDeadline() {
     return parseInt(new Date().getTime() / 1000 + "") + 30000;
@@ -70,74 +66,74 @@ describe("Amm router", function () {
     console.log("l0kRouterContract.address:", l0kRouterContract.address);
   });
 
-  // it("Test addLiquidity", async function () {
-  //   const pair = computePairAddress(
-  //     FACTORY_CONTRACT_ADDRESS,
-  //     PAIR_CONTRACT_CLASS_HASH,
-  //     TOKEN_A,
-  //     TOKEN_B
-  //   );
-  //   const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
+  it("Test addLiquidity", async function () {
+    const pair = computePairAddress(
+      FACTORY_CONTRACT_ADDRESS,
+      PAIR_CONTRACT_CLASS_HASH,
+      TOKEN_A,
+      TOKEN_B
+    );
+    const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
 
-  //   let balanceBefore = bnToUint256(0);
-  //   try {
-  //     const { balance: _balanceBefore } = await l0kPairContract.call(
-  //       "balanceOf",
-  //       {
-  //         account: account0.address,
-  //       }
-  //     );
-  //     balanceBefore = _balanceBefore;
-  //   } catch (err) {}
-  //   console.log("balanceBefore:", balanceBefore);
+    let balanceBefore = bnToUint256(0);
+    try {
+      const { balance: _balanceBefore } = await l0kPairContract.call(
+        "balanceOf",
+        {
+          account: account0.address,
+        }
+      );
+      balanceBefore = _balanceBefore;
+    } catch (err) {}
+    console.log("balanceBefore:", balanceBefore);
 
-  //   const amountA = 1000000;
-  //   const amountB = parseInt(amountA / AB_SCALE + "");
+    const amountA = 1000000;
+    const amountB = parseInt(amountA / AB_SCALE + "");
 
-  //   const invokeArray = [
-  //     {
-  //       toContract: tokenAContract,
-  //       functionName: "approve",
-  //       calldata: {
-  //         spender: l0kRouterContract.address,
-  //         amount: bnToUint256(amountA),
-  //       },
-  //     },
-  //     {
-  //       toContract: tokenBContract,
-  //       functionName: "approve",
-  //       calldata: {
-  //         spender: l0kRouterContract.address,
-  //         amount: bnToUint256(amountB),
-  //       },
-  //     },
-  //     {
-  //       toContract: l0kRouterContract,
-  //       functionName: "addLiquidity",
-  //       calldata: {
-  //         tokenA: TOKEN_A,
-  //         tokenB: TOKEN_B,
-  //         amountADesired: bnToUint256(amountA),
-  //         amountBDesired: bnToUint256(amountB),
-  //         amountAMin: bnToUint256((amountA * 8) / 10),
-  //         amountBMin: bnToUint256((amountB * 8) / 10),
-  //         to: account0.address,
-  //         deadline: getDeadline(),
-  //       },
-  //     },
-  //   ];
+    const invokeArray = [
+      {
+        toContract: tokenAContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(amountA),
+        },
+      },
+      {
+        toContract: tokenBContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(amountB),
+        },
+      },
+      {
+        toContract: l0kRouterContract,
+        functionName: "addLiquidity",
+        calldata: {
+          tokenA: TOKEN_A,
+          tokenB: TOKEN_B,
+          amountADesired: bnToUint256(amountA),
+          amountBDesired: bnToUint256(amountB),
+          amountAMin: bnToUint256((amountA * 8) / 10),
+          amountBMin: bnToUint256((amountB * 8) / 10),
+          to: account0.address,
+          deadline: getDeadline(),
+        },
+      },
+    ];
 
-  //   await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
+    await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
-  //   const { balance: balanceAfter } = await l0kPairContract.call("balanceOf", {
-  //     account: account0.address,
-  //   });
-  //   console.log("balanceAfter:", balanceAfter);
+    const { balance: balanceAfter } = await l0kPairContract.call("balanceOf", {
+      account: account0.address,
+    });
+    console.log("balanceAfter:", balanceAfter);
 
-  //   expect(uint256ToBN(balanceAfter).toNumber()).to.gt(
-  //     uint256ToBN(balanceBefore).toNumber()
-  //   );
-  // });
+    expect(uint256ToBN(balanceAfter).toNumber()).to.gt(
+      uint256ToBN(balanceBefore).toNumber()
+    );
+  });
 
   it("Test swapExactTokensForTokens", async function () {
     const {
