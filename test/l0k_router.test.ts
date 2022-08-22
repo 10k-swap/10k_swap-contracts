@@ -1,19 +1,17 @@
 import { expect } from "chai";
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import {
   OpenZeppelinAccount,
   StarknetContract,
   StarknetContractFactory
 } from "hardhat/types";
-import { stark } from "starknet";
 import { toFelt } from "starknet/dist/utils/number";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
 import {
   computePairAddress,
   ensureEnvVar,
-  envAccountOZ,
-  hardhatCompile
+  envAccountOZ
 } from "./util";
 
 describe("Amm router", function () {
@@ -48,7 +46,9 @@ describe("Amm router", function () {
   }
 
   before(async function () {
-    await hardhatCompile("contracts/l0k_router.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/l0k_router.cairo"],
+    });
 
     account0 = await envAccountOZ(0);
     account1 = await envAccountOZ(1);

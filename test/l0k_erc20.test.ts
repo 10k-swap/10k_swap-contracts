@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import { utils } from "ethers";
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import { OpenZeppelinAccount, StarknetContract } from "hardhat/types/runtime";
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
-import { envAccountOZ, hardhatCompile, stringToFelt } from "./util";
+import { envAccountOZ, stringToFelt } from "./util";
 
 describe("l0k_erc20", function () {
   let account0: OpenZeppelinAccount;
@@ -14,7 +14,9 @@ describe("l0k_erc20", function () {
   const symbolFelt = stringToFelt(process.env.TOKEN_SYMBOL || "A");
 
   before(async function () {
-    await hardhatCompile("contracts/l0k_erc20.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/l0k_erc20.cairo"],
+    });
 
     account0 = await envAccountOZ(0);
     account1 = await envAccountOZ(1);
@@ -66,6 +68,8 @@ describe("l0k_erc20", function () {
       account: account1.address,
     });
 
-    expect(uint256ToBN(balance) + '').to.equal(uint256ToBN(transferAmount)  + '');
+    expect(uint256ToBN(balance) + "").to.equal(
+      uint256ToBN(transferAmount) + ""
+    );
   });
 });

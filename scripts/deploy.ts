@@ -1,11 +1,15 @@
-import { starknet } from "hardhat";
-import { hardhatCompile, stringToFelt } from "../test/util";
+import hardhat, { starknet } from "hardhat";
+import { stringToFelt } from "../test/util";
 
 async function main() {
-  await hardhatCompile("contracts/l0k_erc20.cairo");
-  await hardhatCompile("contracts/l0k_pair.cairo");
-  await hardhatCompile("contracts/l0k_factory.cairo");
-  await hardhatCompile("contracts/l0k_router.cairo");
+  await hardhat.run("starknet-compile", {
+    paths: [
+      "contracts/l0k_erc20.cairo",
+      "contracts/l0k_pair.cairo",
+      "contracts/l0k_factory.cairo",
+      "contracts/l0k_router.cairo",
+    ],
+  });
 
   const feeToSetter = process.env["FEE_TO_SETTER"] || 0;
 

@@ -1,15 +1,16 @@
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import { StarknetContract } from "hardhat/types/runtime";
 import { getSelectorFromName } from "starknet/dist/utils/hash";
 import { toFelt } from "starknet/dist/utils/number";
 import { MAX_FEE } from "./constants";
-import { hardhatCompile } from "./util";
 
 describe("ERC20", function () {
   let erc20Contract: StarknetContract;
 
   before(async () => {
-    await hardhatCompile("contracts/tests/test_erc20.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/tests/test_erc20.cairo"],
+    });
 
     const contractFactory = await starknet.getContractFactory(
       "contracts/tests/test_erc20"

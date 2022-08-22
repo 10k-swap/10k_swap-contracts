@@ -29,7 +29,9 @@ describe("Amm pair swap", function () {
 
   before(async function () {
     // Compile on ./l0k_pair.declare.test.ts
-    // await hardhatCompile("contracts/l0k_pair.cairo");
+    // await hardhat.run("starknet-compile", {
+    //   paths: ["contracts/l0k_pair.cairo"],
+    // });
 
     account0 = await envAccountOZ(0);
     account1 = await envAccountOZ(1);

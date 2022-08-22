@@ -1,10 +1,11 @@
 import { expect } from "chai";
-import { starknet } from "hardhat";
-import { hardhatCompile } from "./util";
+import hardhat, { starknet } from "hardhat";
 
 describe("Amm pair declare", function () {
   before(async function () {
-    await hardhatCompile("contracts/l0k_pair.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/l0k_pair.cairo"],
+    });
   });
 
   it("Test declare", async function () {

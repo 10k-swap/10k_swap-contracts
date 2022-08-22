@@ -1,14 +1,11 @@
 import { expect } from "chai";
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import { OpenZeppelinAccount, StarknetContract } from "hardhat/types/runtime";
-import { shortString } from "starknet";
-import { computeHashOnElements, pedersen } from "starknet/dist/utils/hash";
 import { MAX_FEE } from "./constants";
 import {
   computePairAddress,
   ensureEnvVar,
-  envAccountOZ,
-  hardhatCompile,
+  envAccountOZ
 } from "./util";
 
 describe("Amm factory", function () {
@@ -26,7 +23,9 @@ describe("Amm factory", function () {
   let pairLength = 0;
 
   before(async function () {
-    await hardhatCompile("contracts/l0k_factory.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/l0k_factory.cairo"],
+    });
 
     accountOZ0 = await envAccountOZ(0);
     accountOZ1 = await envAccountOZ(1);

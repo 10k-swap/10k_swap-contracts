@@ -1,14 +1,13 @@
-import { expect } from "chai";
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import { StarknetContract } from "hardhat/types";
-import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
-import { hardhatCompile } from "./util";
 
 describe("Test helper", function () {
   let testHelperContract: StarknetContract;
 
   before(async function () {
-    await hardhatCompile("contracts/tests/test_helper.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/tests/test_helper.cairo"],
+    });
 
     const contractFactory = await starknet.getContractFactory(
       "contracts/tests/test_helper"

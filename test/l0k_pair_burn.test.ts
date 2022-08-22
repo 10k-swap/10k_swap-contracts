@@ -1,8 +1,5 @@
 import { starknet } from "hardhat";
-import {
-  OpenZeppelinAccount,
-  StarknetContract
-} from "hardhat/types";
+import { OpenZeppelinAccount, StarknetContract } from "hardhat/types";
 import { ensureEnvVar, envAccountOZ } from "./util";
 
 describe("Amm pair burn", function () {
@@ -28,7 +25,9 @@ describe("Amm pair burn", function () {
 
   before(async function () {
     // Compile on ./l0k_pair.declare.test.ts
-    // await hardhatCompile("contracts/l0k_pair.cairo");
+    // await hardhat.run("starknet-compile", {
+    //   paths: ["contracts/l0k_pair.cairo"],
+    // });
 
     account0 = await envAccountOZ(0);
 

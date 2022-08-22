@@ -1,9 +1,9 @@
 import { expect } from "chai";
-import { starknet } from "hardhat";
+import hardhat, { starknet } from "hardhat";
 import { StarknetContract } from "hardhat/types";
 import { toBN, toHex } from "starknet/dist/utils/number";
 import { bnToUint256 } from "starknet/dist/utils/uint256";
-import { ensureEnvVar, hardhatCompile } from "./util";
+import { ensureEnvVar } from "./util";
 
 describe("Test l0k_library", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
@@ -15,7 +15,9 @@ describe("Test l0k_library", function () {
   let testl0kLibraryContract: StarknetContract;
 
   before(async function () {
-    await hardhatCompile("contracts/tests/test_l0k_library.cairo");
+    await hardhat.run("starknet-compile", {
+      paths: ["contracts/tests/test_l0k_library.cairo"],
+    });
 
     const contractFactory = await starknet.getContractFactory(
       "contracts/tests/test_l0k_library"

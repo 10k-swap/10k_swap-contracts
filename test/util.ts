@@ -1,5 +1,4 @@
 import { expect } from "chai";
-import { command } from "execa";
 import { starknet } from "hardhat";
 import { OpenZeppelinAccount } from "hardhat/types";
 import { number, shortString } from "starknet";
@@ -46,15 +45,6 @@ export function expectAddressEquality(actual: string, expected: string) {
  */
 export function stringToFelt(str: string) {
   return toFelt("0x" + Buffer.from(str).toString("hex"));
-}
-
-/**
- * Hardhat compile contract
- * @param contractPath
- */
-export async function hardhatCompile(contractPath: string) {
-  const { stdout } = await command(`hardhat starknet-compile ${contractPath}`);
-  process.stdout.write(stdout);
 }
 
 /**
