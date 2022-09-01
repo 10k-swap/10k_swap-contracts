@@ -40,7 +40,7 @@ describe("l0k_erc20", function () {
 
   it("Test ownerMint", async function () {
     const to = account0.address;
-    const mintAmount = bnToUint256(utils.parseEther("1000") + "");
+    const mintAmount = bnToUint256(utils.parseEther(10 ** 20 + "") + "");
     await l0kErc20Contract.invoke(
       "mint",
       {
@@ -58,7 +58,7 @@ describe("l0k_erc20", function () {
   });
 
   it("Test transfer", async function () {
-    const transferAmount = bnToUint256(utils.parseEther("50") + "");
+    const transferAmount = bnToUint256(utils.parseEther(10 ** 18 + "") + "");
     await account0.invoke(l0kErc20Contract, "transfer", {
       recipient: account1.address,
       amount: transferAmount,

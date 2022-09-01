@@ -12,7 +12,6 @@ from starkware.cairo.common.uint256 import (
 from starkware.cairo.common.bool import TRUE, FALSE
 from starkware.cairo.common.math_cmp import is_le_felt
 from starkware.cairo.common.math import assert_nn, assert_not_equal, assert_not_zero
-from starkware.cairo.common.bitwise import bitwise_or, bitwise_and
 from starkware.starknet.common.syscalls import (
     get_caller_address,
     get_contract_address,
@@ -29,7 +28,7 @@ from warplib.maths.mod import warp_mod
 from warplib.maths.gt import warp_gt
 from warplib.maths.neq import warp_neq
 from warplib.maths.add import warp_add256
-from warplib.maths.int_conversions import warp_int256_to_int112, warp_int128_to_int32
+from warplib.maths.int_conversions import warp_int256_to_int112, warp_int128_to_int32, warp_uint256
 
 from libraries.l0k_library import min_uint256
 from libraries.uq112x112 import Q112, encode, uqdiv
@@ -619,18 +618,20 @@ func _update{
     let (if0) = warp_gt(timeElapsed, 0)
     let (if1) = warp_neq(reserve0, 0)
     let (if2) = warp_neq(reserve1, 0)
-    let (b0) = bitwise_and(if0, if1)
-    let (b1) = bitwise_and(b0, if2)
-    if b1 == TRUE:
+    if if0 * if1 * if2 == TRUE:
         let (e0) = encode(reserve0)
         let (e1) = encode(reserve1)
         let (u0) = uqdiv(e1, reserve0)
         let (u1) = uqdiv(e0, reserve1)
 
+        # uint224 to uint256
+        let (u0_256) = warp_uint256(u0)
+        let (u1_256) = warp_uint256(u1)
+
         # * never overflows, and + overflow is desired
         # _price0CumulativeLast = _price0CumulativeLast + u0 * timeElapsed
-        let (p0 : Uint256) = SafeUint256.mul(Uint256(u0, 0), Uint256(timeElapsed, 0))
-        let (p1 : Uint256) = SafeUint256.mul(Uint256(u1, 0), Uint256(timeElapsed, 0))
+        let (p0 : Uint256) = SafeUint256.mul(u0_256, Uint256(timeElapsed, 0))
+        let (p1 : Uint256) = SafeUint256.mul(u1_256, Uint256(timeElapsed, 0))
         let (p0CumulativeLast : Uint256) = warp_add256(p0, price0CumulativeLast)
         let (p1CumulativeLast : Uint256) = warp_add256(p1, price1CumulativeLast)
         _price0CumulativeLast.write(p0CumulativeLast)
