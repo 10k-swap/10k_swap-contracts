@@ -12,6 +12,7 @@ async function main() {
   });
 
   const feeToSetter = process.env["FEE_TO_SETTER"] || 0;
+  console.log("feeToSetter:", feeToSetter);
 
   const l0kErc20ContractFactory = await starknet.getContractFactory(
     "l0k_erc20"
