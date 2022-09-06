@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import { starknet } from "hardhat";
 import { OpenZeppelinAccount } from "hardhat/types";
 import { number, shortString } from "starknet";
@@ -106,4 +107,8 @@ export function computePairAddress(
   ]);
 
   return pair;
+}
+
+export function expandTo18Decimals(n: number): BigNumber {
+  return BigNumber.from(n).mul(BigNumber.from(10).pow(18))
 }
