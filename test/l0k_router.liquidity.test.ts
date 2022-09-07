@@ -173,13 +173,14 @@ describe("Amm router ", function () {
       reserveses1: [reserve1Before, reserve1],
       amountsToAdd: [amountA.toString(), amountB.toString()]
     })
+
     expect(addLiquidityCheckers.checkLPtotalSupply()).to.be.true;
 
     expect(addLiquidityCheckers.checkUserLPBalance()).to.be.true;
 
     expect(addLiquidityCheckers.checkPairReserves()).to.be.true;
 
-    // expect(addLiquidityCheckers.checkUserBalances()).to.be.true;
+    expect(addLiquidityCheckers.checkUserBalances()).to.be.true;
   });
 
   // it("Reomve Liquidity", async function () {

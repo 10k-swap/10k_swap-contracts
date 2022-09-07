@@ -72,17 +72,18 @@ export default class AddLiquidityCheckers {
   }
 
   checkUserBalances(): boolean {
+
+
     return false
   }
 
   checkPairReserves(): boolean {
-    const { amountsToAdd, reserveses0, reserveses1, } = this.amounts
-    const aomunt0 = JSBI.BigInt(amountsToAdd[0])
-    const aomunt1 = JSBI.BigInt(amountsToAdd[1])
+    const { balancesesA, balancesesB, reserveses0, reserveses1, } = this.amounts
+    const aomunt0 = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
+    const aomunt1 = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
 
     const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), aomunt0)
     const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), aomunt1)
-
     return aEqual && bEqual
   }
 
