@@ -40,12 +40,23 @@ npx hardhat test l0k_factory.test.ts
 
 [`l0k_factory.cairo`](./contracts/l0k_factory.cairo)
 
-- Mainnet: `-`
-- Goerli: `0x06c31f39524388c982045988de3788530605ed08b10389def2e7b1dd09d19308`
+- Mainnet Adddress: `-`
+- Goerli Adddress: `0x06c31f39524388c982045988de3788530605ed08b10389def2e7b1dd09d19308`
+
+#### Events
+
+```cairo
+func PairCreated(token0 : felt, token1 : felt, pair : felt, index : felt):
+end
+```
+
+- `token0` is guaranteed to be strictly less than `token1` by sort order.
+- `pair` token0 & token1 pair address
+- `index` pair index, start from 0
 
 #### constructor
 
-```
+```cairo
 func constructor(pairClass : felt, feeToSetter : felt):
 end
 ```
@@ -60,95 +71,132 @@ func feeTo() -> (feeTo : felt):
 end
 ```
 
-- `RETURNS`: feeTo - fee to address(5‰)
+- `RETURNS`: feeTo
 
 #### `view` feeToSetter
 
-- Params: -
+```cairo
+func feeToSetter() -> (feeToSetter : felt):
+end
+```
 
-- Returns:
-
-| Name        | Type | Desc |
-| ----------- | ---- | ---- |
-| feeToSetter | felt | -    |
+- `RETURNS`: feeToSetter
 
 #### `view` getPair
 
-- Params:
+```cairo
+func getPair(token0 : felt, token1 : felt) -> (pair : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| tokenA | felt | -    |
-| tokenA | felt | -    |
-
-- Returns:
-
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+- `token0`: -
+- `token1`: -
+- `RETURNS`: pair
 
 #### `view` allPairs
 
-- Params:
+```cairo
+func allPairs(index : felt) -> (pair : felt):
+end
+```
 
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| index | felt | -    |
-
-- Returns:
-
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+- `index`: pair index
+- `RETURNS`: pair
 
 #### `view` allPairsLength
 
-- Params: -
+```cairo
+func allPairsLength() -> (length : felt):
+end
+```
 
-- Returns:
-
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| length | felt | -    |
+- `RETURNS`: length
 
 #### `external` createPair
 
-- Params:
+```cairo
+func createPair(tokenA : felt, tokenB : felt) -> (pair : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| tokenA | felt | -    |
-| tokenB | felt | -    |
-
-- Returns:
-
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+- `tokenA`: A token address
+- `tokenB`: B token address
+- `RETURNS`: pair
+- `EVENTS`: PairCreated
 
 #### `external` setFeeTo
 
-- Params:
+```cairo
+func setFeeTo(feeTo : felt) -> ():
+end
+```
 
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| feeTo | felt | -    |
-
-- Returns: -
+- `feeTo`: -
 
 #### `external` setFeeToSetter
 
-- Params:
+```cairo
+func setFeeToSetter(feeToSetter : felt) -> ():
+end
+```
 
-| Name           | Type | Desc |
-| -------------- | ---- | ---- |
-| setFeeToSetter | felt | -    |
+- `feeToSetter`: -
 
-- Returns: -
+### l0k_pair
 
-### Il0kPair
+[`l0k_pair.cairo`](./contracts/l0k_pair.cairo)
 
-> ERC20 functions are ignored here
+- ClassHash: `0x231adde42526bad434ca2eb983efdd64472638702f87f97e6e3c084f264e06f`
+
+> ERC20 functions and events are ignored here
+
+#### Events
+
+```cairo
+func Mint(sender : felt, amount0 : Uint256, amount1 : Uint256):
+end
+```
+
+- `sender` Minter
+- `amount0` Token0 amount
+- `amount1` Token1 amount
+
+```cairo
+func Burn(sender : felt, amount0 : Uint256, amount1 : Uint256, to : felt):
+end
+```
+
+- `sender` Burner
+- `amount0` Token0 amount
+- `amount1` Token1 amount
+- `to` Recipient
+
+```cairo
+func Swap(
+    sender : felt,
+    amount0In : Uint256,
+    amount1In : Uint256,
+    amount0Out : Uint256,
+    amount1Out : Uint256,
+    to : felt,
+):
+end
+```
+
+- `sender` Swaper
+- `amount0In` Token0 in amount
+- `amount1In` Token1 in amount
+- `amount0Out` Token0 out amount
+- `amount1Out` Token1 out amount
+- `to` Recipient
+
+```cairo
+func Sync(reserve0 : felt, reserve1 : felt):
+end
+```
+
+- `reserve0` Token0 quantity in pair
+- `reserve1` Token1 quantity in pair
 
 #### `view` MINIMUM_LIQUIDITY
 
@@ -300,7 +348,12 @@ end
 
 - Returns: -
 
-### Il0kRouter
+### l0k_router
+
+[`l0k_router.cairo`](./contracts/l0k_router.cairo)
+
+- Mainnet Adddress: `-`
+- Goerli Adddress: `0x00975910cd99bc56bd289eaaa5cee6cd557f0ddafdb2ce6ebea15b158eb2c664`
 
 #### `view` factory
 
