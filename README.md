@@ -64,7 +64,7 @@ end
 - `pairClass` l0k_pair contract class hash
 - `feeToSetter` feeTo address manager
 
-#### `view` feeTo
+#### Read Functions
 
 ```cairo
 func feeTo() -> (feeTo : felt):
@@ -73,16 +73,12 @@ end
 
 - `RETURNS`: feeTo
 
-#### `view` feeToSetter
-
 ```cairo
 func feeToSetter() -> (feeToSetter : felt):
 end
 ```
 
 - `RETURNS`: feeToSetter
-
-#### `view` getPair
 
 ```cairo
 func getPair(token0 : felt, token1 : felt) -> (pair : felt):
@@ -93,8 +89,6 @@ end
 - `token1`: -
 - `RETURNS`: pair
 
-#### `view` allPairs
-
 ```cairo
 func allPairs(index : felt) -> (pair : felt):
 end
@@ -103,8 +97,6 @@ end
 - `index`: pair index
 - `RETURNS`: pair
 
-#### `view` allPairsLength
-
 ```cairo
 func allPairsLength() -> (length : felt):
 end
@@ -112,7 +104,7 @@ end
 
 - `RETURNS`: length
 
-#### `external` createPair
+#### Write Functions
 
 ```cairo
 func createPair(tokenA : felt, tokenB : felt) -> (pair : felt):
@@ -124,16 +116,12 @@ end
 - `RETURNS`: pair
 - `EVENTS`: PairCreated
 
-#### `external` setFeeTo
-
 ```cairo
 func setFeeTo(feeTo : felt) -> ():
 end
 ```
 
 - `feeTo`: -
-
-#### `external` setFeeToSetter
 
 ```cairo
 func setFeeToSetter(feeToSetter : felt) -> ():
