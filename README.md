@@ -1,6 +1,6 @@
 # 10k Swap Contracts for Cairo
 
-**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
+**A decentralized ZK Rollup low gas fee AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
 
 ## Get started
 
@@ -14,44 +14,53 @@ cd 10k_swap-contracts
 #### Install dependencies
 
 ```
-npm ci
+yarn install
 ```
 
 #### Compile a contract
 
 ```
-npx hardhat starknet-compile contracts/l0k_erc20.cairo
+npx hardhat starknet-compile contracts/l0k_factory.cairo
 ```
 
 #### Run a test that interacts with the compiled contract
 
 ```
-npx hardhat test test_erc20.test.ts
+npx hardhat test l0k_factory.test.ts
 ```
-
-## Troubleshooting
 
 ## Branches
 
-- `main`
+- `main` Stable version
+- `develop` New PRs and features
 
-### Branch updating (for developers)
+## Contracts
 
-- New PRs and features should be targeted to the `develop` branch.
+### l0k_factory
 
-## Contracts interface
+[`l0k_factory.cairo`](./contracts/l0k_factory.cairo)
 
-### Il0kFactory
+- Mainnet: `-`
+- Goerli: `0x06c31f39524388c982045988de3788530605ed08b10389def2e7b1dd09d19308`
+
+#### constructor
+
+```
+func constructor(pairClass : felt, feeToSetter : felt):
+end
+```
+
+- `pairClass` l0k_pair contract class hash
+- `feeToSetter` feeTo address manager
 
 #### `view` feeTo
 
-- Params: -
+```cairo
+func feeTo() -> (feeTo : felt):
+end
+```
 
-- Returns:
-
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| feeTo | felt | -    |
+- `RETURNS`: feeTo - fee to address(5‰)
 
 #### `view` feeToSetter
 
