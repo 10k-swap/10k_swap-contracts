@@ -6,6 +6,8 @@ Using the 10kswap AMM contract, token holder can freely create currency pairs wi
 
 Cairo-VM provides a new development option for the community, it can provide faster TPS, and its computing cost is almost negligible, we believe that AMM will be the most direct beneficiary of these two features. In the previous period, we overcame the difficulties faced by many early developers and implemented the first version to make it run stably. Next, we will explore the potential of zk-tech and develop an AMM that is more friendly to market makers and can control the distribution of liquidity more finely. The key technology is how to use Cairo to develop a "Rich Convex Function". If we are successful, it will bring great inspiration and reference to the zk community, allowing more Dapp developers to participate in the ecological construction.
 
+In Cairo-VM, the gas consumption required to perform computation is much lower than state update (zk-rollup technical feature). further reduce gas costs
+
 At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community
 1). A summary tutorial related to development.
 2). A more general and convenient development scaffold
@@ -167,7 +169,7 @@ end
 
 - ClassHash: `0x231adde42526bad434ca2eb983efdd64472638702f87f97e6e3c084f264e06f`
 
-> ERC20 functions and events based on openzeppelin cairo, [click here](https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/library.cairo) for details.
+> ERC20 functions and events based on openzeppelin cairo, [click here](https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/library.cairo) for details.<br/>
 > Thanks to [openzeppelin](https://github.com/OpenZeppelin/cairo-contracts) for powering cairo.
 
 #### Events
