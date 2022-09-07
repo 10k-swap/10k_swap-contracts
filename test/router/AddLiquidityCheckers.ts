@@ -2,7 +2,7 @@ import JSBI from "jsbi"
 import { MINIMUM_LIQUIDITY, ONE, THREE, TWO, ZERO } from "./constants"
 
 // mock the on-chain sqrt function
-export function sqrt(y: JSBI): JSBI {
+function sqrt(y: JSBI): JSBI {
   let z: JSBI = ZERO
   let x: JSBI
   if (JSBI.greaterThan(y, THREE)) {
@@ -31,6 +31,14 @@ function getLiquidityMinted(totalSupply: string, tokenAmounts: [string, string],
     return undefined
   }
   return liquidity.toString()
+}
+
+function quote(amountA: JSBI, reserveA: JSBI, reserveB: JSBI) {
+  return JSBI.divide(JSBI.multiply(amountA, reserveB), reserveA)
+}
+
+function min(a: JSBI, b: JSBI) {
+  return JSBI.greaterThan(a, b) ? b : a
 }
 
 export default class AddLiquidityCheckers {
@@ -72,17 +80,24 @@ export default class AddLiquidityCheckers {
   }
 
   checkUserBalances(): boolean {
+    const { balancesesA, balancesesB, reserveses0, reserveses1, } = this.amounts
+    const aomunt0 = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
+    const aomunt1 = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
+
+    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), aomunt0)
+    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), aomunt1)
+    return aEqual && bEqual
+
     return false
   }
 
   checkPairReserves(): boolean {
-    const { amountsToAdd, reserveses0, reserveses1, } = this.amounts
-    const aomunt0 = JSBI.BigInt(amountsToAdd[0])
-    const aomunt1 = JSBI.BigInt(amountsToAdd[1])
+    const { balancesesA, balancesesB, reserveses0, reserveses1, } = this.amounts
+    const aomunt0 = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
+    const aomunt1 = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
 
     const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), aomunt0)
     const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), aomunt1)
-
     return aEqual && bEqual
   }
 
