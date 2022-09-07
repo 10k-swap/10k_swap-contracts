@@ -8,10 +8,10 @@ Cairo-VM provides a new development option for the community, it can provide fas
 
 In Cairo-VM, the gas consumption required to perform calculations is much lower than the state update (zk-rollup technical feature). Based on this feature, we will continue to optimize the contract (increase the appropriate amount of calculation to reduce the amount of state update), and further reduce gas fee.
 
-At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community.
-1). A summary tutorial related to development.
-2). A more general and convenient development scaffold
-3). Provide sdk and defi contract library to facilitate dapp development
+At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community.<br />
+1). A summary tutorial related to development.<br />
+2). A more general and convenient development scaffold.<br />
+3). Provide sdk and defi contract library to facilitate dapp development.<br />
 
 ## 10Kswap is on the testnet. To preview
 
