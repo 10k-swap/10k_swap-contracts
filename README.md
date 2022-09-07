@@ -1,6 +1,8 @@
-# 10k Swap Contracts for Cairo
+# 10Kswap Contracts for Cairo
 
-**A decentralized ZK Rollup low gas fee AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
+**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
+10Kswap is actively exploring the updated user experience of ZK technology application on AMM(Including but not limited to lower gas fees, higher TPS).
+At the same time, Using the 10kswap decentralized AMM contract, token holder can freely create currency pairs without paying high fees.
 
 ## Get started
 
@@ -152,7 +154,8 @@ end
 
 - ClassHash: `0x231adde42526bad434ca2eb983efdd64472638702f87f97e6e3c084f264e06f`
 
-> ERC20 functions and events are ignored here
+> ERC20 functions and events based on openzeppelin cairo, [click here](https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/library.cairo) for details.
+> Thanks to [openzeppelin](https://github.com/OpenZeppelin/cairo-contracts) for powering cairo.
 
 #### Events
 
@@ -210,101 +213,115 @@ end
 - `reserve0` Token0 quantity in pair
 - `reserve1` Token1 quantity in pair
 
-#### `view` MINIMUM_LIQUIDITY
+#### Read Functions
 
-- Params: -
+##### MINIMUM_LIQUIDITY
 
-- Returns:
+```cairo
+func MINIMUM_LIQUIDITY() -> (MINIMUM_LIQUIDITY : felt):
+end
+```
 
-| Name  | Type    | Desc |
-| ----- | ------- | ---- |
-| value | Uint256 | -    |
+- `MINIMUM_LIQUIDITY` -
 
-#### `view` factory
+##### factory
 
-- Params: -
+```cairo
+func factory() -> (factory : felt):
+end
+```
 
-- Returns:
+- `factory` l0k_factory contract
 
-| Name    | Type | Desc |
-| ------- | ---- | ---- |
-| factory | felt | -    |
+##### token0
 
-#### `view` token0
+```cairo
+func token0() -> (token0 : felt):
+end
+```
 
-- Params: -
+- `token0` -
 
-- Returns:
+##### token1
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| token0 | felt | -    |
+```cairo
+func token1() -> (token1 : felt):
+end
+```
 
-#### `view` token1
+- `token1` -
 
-- Params: -
+##### blockTimestampLast
 
-- Returns:
+```cairo
+func blockTimestampLast() -> (blockTimestampLast : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| token1 | felt | -    |
+- `blockTimestampLast` -
 
-#### `view` getReserves
+##### price0CumulativeLast
 
-- Params: -
+```cairo
+func price0CumulativeLast() -> (price0CumulativeLast : felt):
+end
+```
 
-- Returns:
+- `price0CumulativeLast` -
 
-| Name               | Type | Desc |
-| ------------------ | ---- | ---- |
-| reserve0           | felt | -    |
-| reserve1           | felt | -    |
-| blockTimestampLast | felt | -    |
+##### price1CumulativeLast
 
-#### `view` price0CumulativeLast
+```cairo
+func price1CumulativeLast() -> (price1CumulativeLast : felt):
+end
+```
 
-- Params: -
+- `price1CumulativeLast` -
 
-- Returns:
+##### kLast
 
-| Name   | Type    | Desc |
-| ------ | ------- | ---- |
-| price0 | Uint256 | -    |
+```cairo
+func kLast() -> (kLast : felt):
+end
+```
 
-#### `view` price1CumulativeLast
+- `kLast` -
 
-- Params: -
+##### getReserves
 
-- Returns:
+```cairo
+func getReserves() -> (reserve0 : felt, reserve1 : felt, blockTimestampLast : felt):
+end
+```
 
-| Name   | Type    | Desc |
-| ------ | ------- | ---- |
-| price1 | Uint256 | -    |
+- `reserve0` Token0 quantity in pair
+- `reserve1` reserve1 quantity in pair
+- `blockTimestampLast` -
 
-#### `view` kLast
+#### Write Functions
 
-- Params: -
+##### initialize
 
-- Returns:
+```cairo
+func initialize() -> (token0 : felt, token1 : felt):
+end
+```
 
-| Name  | Type    | Desc |
-| ----- | ------- | ---- |
-| kLast | Uint256 | -    |
+> called once by the factory at time of deployment
 
-#### `external` mint
+- `token0` -
+- `token1` -
 
-- Params:
+##### mint
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| to   | felt | -    |
+```cairo
+func mint(to : felt) -> (liquidity : Uint256):
+end
+```
 
-- Returns:
-
-| Name      | Type    | Desc |
-| --------- | ------- | ---- |
-| liquidity | Uint256 | -    |
+- `to` Recipient
+- `liquidity` Pair token quantity
+- `EVENTS` 
 
 #### `external` burn
 
