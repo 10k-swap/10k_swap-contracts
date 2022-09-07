@@ -1,12 +1,19 @@
 # 10Kswap Contracts for Cairo
 
-**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
-10Kswap is actively exploring the updated user experience of ZK technology application on AMM(Including but not limited to lower gas fees, higher TPS).
-At the same time, Using the 10kswap decentralized AMM contract, token holder can freely create currency pairs without paying high fees.
+**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).<br/>
+10Kswap is actively exploring the updated user experience of ZK technology application on AMM(Including but not limited to lower gas fees, higher TPS).<br/>
+Using the 10kswap AMM contract, token holder can freely create currency pairs without paying high fees.
 
-## To preview 10Kswap
+Cairo-VM provides a new development option for the community, it can provide faster TPS, and its computing cost is almost negligible, we believe that AMM will be the most direct beneficiary of these two features. In the previous period, we overcame the difficulties faced by many early developers and implemented the first version to make it run stably. Next, we will explore the potential of zk-tech and develop an AMM that is more friendly to market makers and can control the distribution of liquidity more finely. The key technology is how to use Cairo to develop a "Rich Convex Function". If we are successful, it will bring great inspiration and reference to the zk community, allowing more Dapp developers to participate in the ecological construction.
 
-[`10kswap.com`](https://10kswap.com)
+At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community
+1). A summary tutorial related to development.
+2). A more general and convenient development scaffold
+3). Provide sdk and defi contract library to facilitate dapp development
+
+## 10Kswap is on the testnet. To preview
+
+[`https://10kswap.com`](https://10kswap.com)
 
 ![preview](./docs/images/preview.png)
 
