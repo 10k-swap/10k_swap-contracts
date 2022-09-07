@@ -66,6 +66,8 @@ end
 
 #### Read Functions
 
+##### feeTo
+
 ```cairo
 func feeTo() -> (feeTo : felt):
 end
@@ -73,12 +75,16 @@ end
 
 - `RETURNS`: feeTo
 
+##### feeToSetter
+
 ```cairo
 func feeToSetter() -> (feeToSetter : felt):
 end
 ```
 
 - `RETURNS`: feeToSetter
+
+##### getPair
 
 ```cairo
 func getPair(token0 : felt, token1 : felt) -> (pair : felt):
@@ -89,6 +95,8 @@ end
 - `token1`: -
 - `RETURNS`: pair
 
+##### allPairs
+
 ```cairo
 func allPairs(index : felt) -> (pair : felt):
 end
@@ -96,6 +104,8 @@ end
 
 - `index`: pair index
 - `RETURNS`: pair
+
+##### allPairsLength
 
 ```cairo
 func allPairsLength() -> (length : felt):
@@ -105,6 +115,8 @@ end
 - `RETURNS`: length
 
 #### Write Functions
+
+##### createPair
 
 ```cairo
 func createPair(tokenA : felt, tokenB : felt) -> (pair : felt):
@@ -116,12 +128,16 @@ end
 - `RETURNS`: pair
 - `EVENTS`: PairCreated
 
+##### setFeeTo
+
 ```cairo
 func setFeeTo(feeTo : felt) -> ():
 end
 ```
 
 - `feeTo`: -
+
+##### setFeeToSetter
 
 ```cairo
 func setFeeToSetter(feeToSetter : felt) -> ():
@@ -140,6 +156,8 @@ end
 
 #### Events
 
+##### Mint
+
 ```cairo
 func Mint(sender : felt, amount0 : Uint256, amount1 : Uint256):
 end
@@ -148,6 +166,8 @@ end
 - `sender` Minter
 - `amount0` Token0 amount
 - `amount1` Token1 amount
+
+##### Burn
 
 ```cairo
 func Burn(sender : felt, amount0 : Uint256, amount1 : Uint256, to : felt):
@@ -158,6 +178,8 @@ end
 - `amount0` Token0 amount
 - `amount1` Token1 amount
 - `to` Recipient
+
+##### Swap
 
 ```cairo
 func Swap(
@@ -177,6 +199,8 @@ end
 - `amount0Out` Token0 out amount
 - `amount1Out` Token1 out amount
 - `to` Recipient
+
+##### Sync
 
 ```cairo
 func Sync(reserve0 : felt, reserve1 : felt):
