@@ -68,8 +68,8 @@ end
 ```
 
 - `token0` is guaranteed to be strictly less than `token1` by sort order.
-- `pair` token0 & token1 pair address
-- `index` pair index, start from 0
+- `pair`: token0 & token1 pair address
+- `index`: pair index, start from 0
 
 #### constructor
 
@@ -78,8 +78,8 @@ func constructor(pairClass : felt, feeToSetter : felt):
 end
 ```
 
-- `pairClass` l0k_pair contract class hash
-- `feeToSetter` feeTo address manager
+- `pairClass`: l0k_pair contract class hash
+- `feeToSetter`: feeTo address manager
 
 #### Read Functions
 
@@ -143,7 +143,7 @@ end
 - `tokenA`: A token address
 - `tokenB`: B token address
 - `RETURNS`: pair
-- `EVENTS`: PairCreated
+- Emits `PairCreated`
 
 ##### setFeeTo
 
@@ -336,7 +336,7 @@ end
 
 - `to` Recipient
 - `liquidity` Pair token quantity
-- `EVENTS`
+- Emits `Mint`, `Sync`, `Transfer<sub>ERC20</sub>`.
 
 #### `external` burn
 
