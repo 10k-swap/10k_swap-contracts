@@ -460,9 +460,6 @@ func swap{
     _swap_Transfer(token0, to, amount0Out)
     _swap_Transfer(token1, to, amount1Out)
 
-    # TODO. Not implemented uniswapV2Call
-    # if (data.length > 0) IUniswapV2Callee(to).uniswapV2Call(msg.sender, amount0Out, amount1Out, data);
-
     let (self) = get_contract_address()
     let (balance0 : Uint256) = IERC20.balanceOf(contract_address=token0, account=self)
     let (balance1 : Uint256) = IERC20.balanceOf(contract_address=token1, account=self)
