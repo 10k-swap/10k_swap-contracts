@@ -1,22 +1,6 @@
 import JSBI from "jsbi"
-import { MINIMUM_LIQUIDITY, ONE, THREE, TWO, ZERO } from "./constants"
-
-// mock the on-chain sqrt function
-function sqrt(y: JSBI): JSBI {
-  let z: JSBI = ZERO
-  let x: JSBI
-  if (JSBI.greaterThan(y, THREE)) {
-    z = y
-    x = JSBI.add(JSBI.divide(y, TWO), ONE)
-    while (JSBI.lessThan(x, z)) {
-      z = x
-      x = JSBI.divide(JSBI.add(JSBI.divide(y, x), x), TWO)
-    }
-  } else if (JSBI.notEqual(y, ZERO)) {
-    z = ONE
-  }
-  return z
-}
+import { sqrt } from "../util"
+import { MINIMUM_LIQUIDITY,  ZERO } from "../constants"
 
 function getLiquidityMinted(totalSupply: string, tokenAmounts: [string, string], reserves: [string, string]): string | undefined {
   let liquidity: JSBI
@@ -37,8 +21,27 @@ function quote(amountA: JSBI, reserveA: JSBI, reserveB: JSBI) {
   return JSBI.divide(JSBI.multiply(amountA, reserveB), reserveA)
 }
 
-function min(a: JSBI, b: JSBI) {
-  return JSBI.greaterThan(a, b) ? b : a
+export function getOptimalAmounts(a: JSBI, b: JSBI, reserveA: JSBI, reserveB: JSBI) {
+  if (JSBI.equal(ZERO, reserveA) && JSBI.equal(ZERO, reserveB)) {
+    return {
+      amountAOptimal: a,
+      amountBOptimal: b
+    }
+  }
+  const amountAOptimal = quote(b, reserveB, reserveA)
+  const amountBOptimal = quote(a, reserveA, reserveB)
+
+  if (JSBI.lessThanOrEqual(amountAOptimal, a)) {
+    return {
+      amountAOptimal: amountAOptimal,
+      amountBOptimal: b
+    }
+  }
+
+  return {
+    amountAOptimal: a,
+    amountBOptimal: amountBOptimal
+  }
 }
 
 export default class AddLiquidityCheckers {
@@ -80,24 +83,36 @@ export default class AddLiquidityCheckers {
   }
 
   checkUserBalances(): boolean {
-    const { balancesesA, balancesesB, reserveses0, reserveses1, } = this.amounts
-    const aomunt0 = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
-    const aomunt1 = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
+    const { balancesesA, balancesesB, reserveses0, reserveses1, amountsToAdd } = this.amounts
 
-    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), aomunt0)
-    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), aomunt1)
+    const { amountAOptimal, amountBOptimal } = getOptimalAmounts(
+      JSBI.BigInt(amountsToAdd[0]),
+      JSBI.BigInt(amountsToAdd[1]),
+      JSBI.BigInt(reserveses0[0]),
+      JSBI.BigInt(reserveses1[0])
+    )
+    const userDebitAmountA = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
+    const userDebitAomuntB = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
+
+    const aEqual = JSBI.equal(userDebitAmountA, amountAOptimal)
+    const bEqual = JSBI.equal(userDebitAomuntB, amountBOptimal)
+
     return aEqual && bEqual
-
-    return false
   }
 
   checkPairReserves(): boolean {
-    const { balancesesA, balancesesB, reserveses0, reserveses1, } = this.amounts
-    const aomunt0 = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
-    const aomunt1 = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
+    const { reserveses0, reserveses1, amountsToAdd } = this.amounts
 
-    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), aomunt0)
-    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), aomunt1)
+    const { amountAOptimal, amountBOptimal } = getOptimalAmounts(
+      JSBI.BigInt(amountsToAdd[0]),
+      JSBI.BigInt(amountsToAdd[1]),
+      JSBI.BigInt(reserveses0[0]),
+      JSBI.BigInt(reserveses1[0])
+    )
+
+    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), amountAOptimal)
+    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), amountBOptimal)
+
     return aEqual && bEqual
   }
 
