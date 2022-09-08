@@ -68,8 +68,8 @@ end
 ```
 
 - `token0` is guaranteed to be strictly less than `token1` by sort order.
-- `pair`: token0 & token1 pair address
-- `index`: pair index, start from 0
+- `pair` token0 & token1 pair address
+- `index` pair index, start from 0
 
 #### constructor
 
@@ -78,8 +78,8 @@ func constructor(pairClass : felt, feeToSetter : felt):
 end
 ```
 
-- `pairClass`: l0k_pair contract class hash
-- `feeToSetter`: feeTo address manager
+- `pairClass` l0k_pair contract class hash
+- `feeToSetter` feeTo address manager
 
 #### Read Functions
 
@@ -90,7 +90,7 @@ func feeTo() -> (feeTo : felt):
 end
 ```
 
-- `RETURNS`: feeTo
+- Returns `feeTo`
 
 ##### feeToSetter
 
@@ -99,7 +99,7 @@ func feeToSetter() -> (feeToSetter : felt):
 end
 ```
 
-- `RETURNS`: feeToSetter
+- Returns `feeToSetter`
 
 ##### getPair
 
@@ -108,9 +108,9 @@ func getPair(token0 : felt, token1 : felt) -> (pair : felt):
 end
 ```
 
-- `token0`: -
-- `token1`: -
-- `RETURNS`: pair
+- `token0` -
+- `token1` -
+- Returns `pair`
 
 ##### allPairs
 
@@ -119,8 +119,8 @@ func allPairs(index : felt) -> (pair : felt):
 end
 ```
 
-- `index`: pair index
-- `RETURNS`: pair
+- `index` pair index
+- Returns `pair`
 
 ##### allPairsLength
 
@@ -129,7 +129,7 @@ func allPairsLength() -> (length : felt):
 end
 ```
 
-- `RETURNS`: length
+- Returns `length`
 
 #### Write Functions
 
@@ -140,9 +140,9 @@ func createPair(tokenA : felt, tokenB : felt) -> (pair : felt):
 end
 ```
 
-- `tokenA`: A token address
-- `tokenB`: B token address
-- `RETURNS`: pair
+- `tokenA` A token address
+- `tokenB` B token address
+- Returns `pair`
 - Emits `PairCreated`
 
 ##### setFeeTo
@@ -152,7 +152,7 @@ func setFeeTo(feeTo : felt) -> ():
 end
 ```
 
-- `feeTo`: -
+- `feeTo` -
 
 ##### setFeeToSetter
 
@@ -161,7 +161,7 @@ func setFeeToSetter(feeToSetter : felt) -> ():
 end
 ```
 
-- `feeToSetter`: -
+- `feeToSetter` -
 
 ### l0k_pair
 
@@ -335,62 +335,49 @@ end
 ```
 
 - `to` Recipient
-- `liquidity` Pair token quantity
-- Emits `Mint`, `Sync`, `Transfer<sub>ERC20</sub>`.
+- RETURNS: `liquidity` Pair token quantity
+- Emits `Mint`, `Sync`, `Transfer`<sub>ERC20</sub>
 
-#### `external` burn
+##### burn
 
-- Params:
+```cairo
+func burn(to : felt) -> (amount0 : Uint256, amount1 : Uint256):
+end
+```
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| to   | felt | -    |
+- `to` Recipient
+- RETURNS: `amount0` Received token0 quantity, `amount1` Received token0 quantity
+- Emits `Burn`, `Sync`, `Transfer`<sub>ERC20</sub>
 
-- Returns:
+##### swap
 
-| Name    | Type    | Desc |
-| ------- | ------- | ---- |
-| amount0 | Uint256 | -    |
-| amount1 | Uint256 | -    |
+```cairo
+func swap(amount0Out : Uint256, amount1Out : Uint256, to : felt) -> ():
+end
+```
 
-#### `external` swap
+- `amount0Out` -
+- `amount1Out` -
+- `to` Recipient
+- Emits `Swap`, `Sync`
 
-- Params:
+##### skim
 
-| Name       | Type    | Desc |
-| ---------- | ------- | ---- |
-| amount0Out | Uint256 | -    |
-| amount1Out | Uint256 | -    |
-| to         | felt    | -    |
+```cairo
+func skim() -> (to : felt):
+end
+```
 
-- Returns: -
+- `to` Recipient
 
-#### `external` skim
+##### sync
 
-- Params:
+```cairo
+func sync() -> ():
+end
+```
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| to   | felt | -    |
-
-- Returns: -
-
-#### `external` sync
-
-- Params: -
-
-- Returns: -
-
-#### `external` initialize
-
-- Params:
-
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| token0 | felt | -    |
-| token1 | felt | -    |
-
-- Returns: -
+- Emits `Sync`
 
 ### l0k_router
 
@@ -399,193 +386,191 @@ end
 - Mainnet Adddress: `-`
 - Goerli Adddress: `0x00975910cd99bc56bd289eaaa5cee6cd557f0ddafdb2ce6ebea15b158eb2c664`
 
-#### `view` factory
+#### Read Functions
 
-- Params: -
+##### factory
 
-- Returns:
+```cairo
+func factory() -> (factory : felt):
+end
+```
 
-| Name    | Type | Desc |
-| ------- | ---- | ---- |
-| factory | felt | -    |
+- `factory` l0k_factory contract
 
-#### `view` quote
+##### quote
 
-- Params:
+```cairo
+func quote(amountA : Uint256, reserveA : felt, reserveB : felt) -> (amountB : Uint256):
+end
+```
 
-| Name     | Type    | Desc |
-| -------- | ------- | ---- |
-| amountA  | Uint256 | -    |
-| reserveA | felt    | -    |
-| reserveB | felt    | -    |
+- `amountA` TokenA quantity
+- `reserveA` TokenA quantity in pair
+- `reserveB` TokenB quantity in pair
+- Returns `amountB` Received tokenB quantity
 
-- Returns:
+##### getAmountOut
 
-| Name    | Type    | Desc |
-| ------- | ------- | ---- |
-| amountB | Uint256 | -    |
+```cairo
+func getAmountOut(amountIn : Uint256, reserveIn : felt, reserveOut : felt) -> (amountOut : Uint256):
+end
+```
 
-#### `view` getAmountOut
+- `amountIn` TokenIn quantity
+- `reserveIn` TokenIn quantity in pair
+- `reserveOut` TokenOut quantity in pair
+- Returns `amountOut` Received tokenOut quantity
 
-- Params:
+##### getAmountIn
 
-| Name       | Type    | Desc |
-| ---------- | ------- | ---- |
-| amountIn   | Uint256 | -    |
-| reserveIn  | felt    | -    |
-| reserveOut | felt    | -    |
+```cairo
+func getAmountOut(amountOut : Uint256, reserveIn : felt, reserveOut : felt) -> (amountIn : Uint256):
+end
+```
 
-- Returns:
+- `amountOut` TokenOut quantity
+- `reserveIn` TokenIn quantity in pair
+- `reserveOut` TokenOut quantity in pair
+- Returns `amountIn` Received tokenIn quantity
 
-| Name      | Type    | Desc |
-| --------- | ------- | ---- |
-| amountOut | Uint256 | -    |
+##### getAmountsOut
 
-#### `view` getAmountIn
+```cairo
+func getAmountsOut(amountIn : Uint256, path_len : felt, path : felt*) -> (amounts_len : felt, amounts : Uint256*):
+end
+```
 
-- Params:
+- `amountIn` TokenIn quantity
+- `path_len` Path's length
+- `path` [TokenA, TokenB, ...]
+- Returns `amounts_len` amounts's length, `amounts` received tokens amount
 
-| Name       | Type    | Desc |
-| ---------- | ------- | ---- |
-| amountOut  | Uint256 | -    |
-| reserveIn  | felt    | -    |
-| reserveOut | felt    | -    |
+##### getAmountsIn
 
-- Returns:
+```cairo
+func getAmountsIn(amountOut : Uint256, path_len : felt, path : felt*) -> (amounts_len : felt, amounts : Uint256*):
+end
+```
 
-| Name     | Type    | Desc |
-| -------- | ------- | ---- |
-| amountIn | Uint256 | -    |
+- `amountOut` TokenOut quantity
+- `path_len` Path's length
+- `path` [TokenB, TokenA, ...]
+- Returns `amounts_len` amounts's length, `amounts` send tokens amount
 
-#### `view` getAmountsOut
+#### Write Functions
 
-- Params:
+##### addLiquidity
 
-| Name     | Type    | Desc |
-| -------- | ------- | ---- |
-| amountIn | Uint256 | -    |
-| path_len | felt    | -    |
-| path     | felt\*  | -    |
+```cairo
+func addLiquidity(
+    tokenA : felt,
+    tokenB : felt,
+    amountADesired : Uint256,
+    amountBDesired : Uint256,
+    amountAMin : Uint256,
+    amountBMin : Uint256,
+    to : felt,
+    deadline : felt,
+) -> (amountA : Uint256, amountB : Uint256, liquidity : Uint256):
+end
+```
 
-- Returns:
+- `tokenA` TokenA address
+- `tokenB` TokenB address
+- `amountADesired` -
+- `amountBDesired` -
+- `amountAMin` -
+- `amountBMin` -
+- `to` Recipient
+- `deadline` Expired timestamp(unix)
+- Returns `amountA` Used tokenA quantity, `amountB` Used tokenB quantity, `liquidity` Pair token quantity
 
-| Name        | Type      | Desc |
-| ----------- | --------- | ---- |
-| amounts_len | felt      | -    |
-| amounts_len | Uint256\* | -    |
+##### removeLiquidity
 
-#### `view` getAmountsIn
+```cairo
+func removeLiquidity(
+    tokenA : felt,
+    tokenB : felt,
+    liquidity : Uint256,
+    amountAMin : Uint256,
+    amountBMin : Uint256,
+    to : felt,
+    deadline : felt,
+) -> (amountA : Uint256, amountB : Uint256):
+end
+```
 
-- Params:
+- `tokenA` TokenA address
+- `tokenB` TokenB address
+- `liquidity` Pair token quantity
+- `amountAMin` -
+- `amountBMin` -
+- `to` Recipient
+- `deadline` Expired timestamp(unix)
+- Returns `amountA` Received tokenA quantity, `amountB` Received tokenB quantity
 
-| Name      | Type    | Desc |
-| --------- | ------- | ---- |
-| amountOut | Uint256 | -    |
-| path_len  | felt    | -    |
-| path      | felt\*  | -    |
+##### swapExactTokensForTokens
 
-- Returns:
+```cairo
+func swapExactTokensForTokens(
+    amountIn : Uint256,
+    amountOutMin : Uint256,
+    path_len : felt,
+    path : felt*,
+    to : felt,
+    deadline : felt,
+) -> (amounts_len : felt, amounts : Uint256*):
+end
+```
 
-| Name        | Type      | Desc |
-| ----------- | --------- | ---- |
-| amounts_len | felt      | -    |
-| amounts_len | Uint256\* | -    |
+- `amountIn` -
+- `amountOutMin` -
+- `path_len` -
+- `path` -
+- `to` Recipient
+- `deadline` Expired timestamp(unix)
+- Returns `amounts_len` amounts's length, `amounts` received tokens amount
 
-#### `external` addLiquidity
+##### swapTokensForExactTokens
 
-- Params:
+```cairo
+func swapTokensForExactTokens(
+    amountOut : Uint256,
+    amountInMax : Uint256,
+    path_len : felt,
+    path : felt*,
+    to : felt,
+    deadline : felt,
+) -> (amounts_len : felt, amounts : Uint256*):
+end
+```
 
-| Name           | Type    | Desc |
-| -------------- | ------- | ---- |
-| tokenA         | felt    | -    |
-| tokenB         | felt    | -    |
-| amountADesired | Uint256 | -    |
-| amountBDesired | Uint256 | -    |
-| amountAMin     | Uint256 | -    |
-| amountBMin     | Uint256 | -    |
-| to             | felt    | -    |
-| deadline       | felt    | -    |
+- `amountOut` -
+- `amountInMax` -
+- `path_len` -
+- `path` -
+- `to` Recipient
+- `deadline` Expired timestamp(unix)
+- Returns `amounts_len` amounts's length, `amounts` send tokens amount
 
-- Returns:
+##### swapExactTokensForTokensSupportingFeeOnTransferTokens
 
-| Name      | Type    | Desc |
-| --------- | ------- | ---- |
-| amountA   | Uint256 | -    |
-| amountB   | Uint256 | -    |
-| liquidity | Uint256 | -    |
+```cairo
+func swapExactTokensForTokensSupportingFeeOnTransferTokens(
+    amountIn : Uint256,
+    amountOutMin : Uint256,
+    path_len : felt,
+    path : felt*,
+    to : felt,
+    deadline : felt,
+):
+end
+```
 
-#### `external` removeLiquidity
-
-- Params:
-
-| Name       | Type    | Desc |
-| ---------- | ------- | ---- |
-| tokenA     | felt    | -    |
-| tokenB     | felt    | -    |
-| liquidity  | Uint256 | -    |
-| amountAMin | Uint256 | -    |
-| amountBMin | Uint256 | -    |
-| to         | felt    | -    |
-| deadline   | felt    | -    |
-
-- Returns:
-
-| Name    | Type    | Desc |
-| ------- | ------- | ---- |
-| amountA | Uint256 | -    |
-| amountB | Uint256 | -    |
-
-#### `external` swapExactTokensForTokens
-
-- Params:
-
-| Name         | Type    | Desc |
-| ------------ | ------- | ---- |
-| amountIn     | Uint256 | -    |
-| amountOutMin | Uint256 | -    |
-| path_len     | felt    | -    |
-| path         | felt\*  | -    |
-| to           | felt    | -    |
-| deadline     | felt    | -    |
-
-- Returns:
-
-| Name        | Type      | Desc |
-| ----------- | --------- | ---- |
-| amounts_len | felt      | -    |
-| amounts     | Uint256\* | -    |
-
-#### `external` swapTokensForExactTokens
-
-- Params:
-
-| Name        | Type    | Desc |
-| ----------- | ------- | ---- |
-| amountOut   | Uint256 | -    |
-| amountInMax | Uint256 | -    |
-| path_len    | felt    | -    |
-| path        | felt\*  | -    |
-| to          | felt    | -    |
-| deadline    | felt    | -    |
-
-- Returns:
-
-| Name        | Type      | Desc |
-| ----------- | --------- | ---- |
-| amounts_len | felt      | -    |
-| amounts     | Uint256\* | -    |
-
-#### `external` swapExactTokensForTokensSupportingFeeOnTransferTokens
-
-- Params:
-
-| Name         | Type    | Desc |
-| ------------ | ------- | ---- |
-| amountIn     | Uint256 | -    |
-| amountOutMin | Uint256 | -    |
-| path_len     | felt    | -    |
-| path         | felt\*  | -    |
-| to           | felt    | -    |
-| deadline     | felt    | -    |
-
-- Returns: -
+- `amountIn` -
+- `amountOutMin` -
+- `path_len` -
+- `path` -
+- `to` Recipient
+- `deadline` Expired timestamp(unix)
+- Returns `amounts_len` amounts's length, `amounts` send tokens amount
