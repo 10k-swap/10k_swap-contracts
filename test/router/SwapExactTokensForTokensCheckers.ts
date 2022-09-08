@@ -47,7 +47,9 @@ export default class SwapExactTokensForTokensCheckers {
     const debitAmountA = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
     const getAmountB = JSBI.subtract(JSBI.BigInt(balancesesB[1]), JSBI.BigInt(balancesesB[0]))
 
-    if (!this.amountB) return false
+    if (!this.amountB) {
+      return false
+    }
 
     const aEqual = JSBI.equal(debitAmountA, JSBI.BigInt(amountAToSwap))
     const bEqual = JSBI.equal(this.amountB, getAmountB)
@@ -56,7 +58,17 @@ export default class SwapExactTokensForTokensCheckers {
   }
 
   checkPairReserves(): boolean {
-    return false
-  }
+    const { reserveses0, reserveses1, amountAToSwap } = this.amounts
+    const diffReservesA = JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0]))
+    const diffReservesB = JSBI.subtract(JSBI.BigInt(reserveses1[0]), JSBI.BigInt(reserveses1[1]))
 
+    if (!this.amountB) {
+      return false
+    }
+
+    const aEqual = JSBI.equal(diffReservesA, JSBI.BigInt(amountAToSwap))
+    const bEqual = JSBI.equal(this.amountB, diffReservesB)
+
+    return aEqual && bEqual
+  }
 }

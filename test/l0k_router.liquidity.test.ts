@@ -122,6 +122,7 @@ describe("Amm Router Liquidity", function () {
         },
       },
     ];
+
     await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
     const [

@@ -163,8 +163,6 @@ export async function getTokenBalances(account: OpenZeppelinAccount, [tokenACont
   const { balance: balanceTokenB } = await tokenBContract.call("balanceOf", {
     account: account.address,
   });
-  console.log('balanceTokenA:', balanceTokenA)
-  console.log('balanceTokenB:', balanceTokenB)
   return {
     balanceTokenA: uint256ToBN(balanceTokenA).toString(),
     balanceTokenB: uint256ToBN(balanceTokenB).toString()

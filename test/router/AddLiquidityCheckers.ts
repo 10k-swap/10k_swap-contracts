@@ -1,6 +1,6 @@
 import JSBI from "jsbi"
 import { sqrt } from "../util"
-import { MINIMUM_LIQUIDITY,  ZERO } from "../constants"
+import { MINIMUM_LIQUIDITY, ZERO } from "../constants"
 
 function getLiquidityMinted(totalSupply: string, tokenAmounts: [string, string], reserves: [string, string]): string | undefined {
   let liquidity: JSBI
@@ -122,8 +122,12 @@ export default class AddLiquidityCheckers {
       reserveses0[0],
       reserveses1[0]
     ])
+    console.log('liquidityMinted:', liquidityMinted?.toString())
     if (liquidityMinted) {
       const amount = JSBI.subtract(JSBI.BigInt(LPTotalSupplys[1]), JSBI.BigInt(LPTotalSupplys[0]))
+      console.log('LPTotalSupplys1:', LPTotalSupplys[1])
+      console.log('LPTotalSupplys0:', LPTotalSupplys[0])
+      console.log('amount:', amount?.toString())
       return JSBI.equal(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
     }
     return false
