@@ -19,3 +19,6 @@ starknet-artifacts
 
 # venv
 cairo_venv
+
+# No package-lock.json. Use yarn.lock
+package-lock.json

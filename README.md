@@ -1,6 +1,23 @@
-# 10k Swap Contracts for Cairo
+# 10Kswap Contracts for Cairo
 
-**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).
+**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).<br/>
+10Kswap is actively exploring the updated user experience of ZK technology application on AMM(Including but not limited to lower gas fees, higher TPS).<br/>
+Using the 10kswap AMM contract, token holder can freely create currency pairs without paying high fees.
+
+Cairo-VM provides a new development option for the community, it can provide faster TPS, and its computing cost is almost negligible, we believe that AMM will be the most direct beneficiary of these two features. In the previous period, we overcame the difficulties faced by many early developers and implemented the first version to make it run stably. Next, we will explore the potential of zk-tech and develop an AMM that is more friendly to market makers and can control the distribution of liquidity more finely. The key technology is how to use Cairo to develop a "Rich Convex Function". If we are successful, it will bring great inspiration and reference to the zk community, allowing more Dapp developers to participate in the ecological construction.
+
+In Cairo-VM, the gas consumption required to perform calculations is much lower than the state update (zk-rollup technical feature). Based on this feature, we will continue to optimize the contract (increase the appropriate amount of calculation to reduce the amount of state update), and further reduce gas fee.
+
+At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community.<br />
+1). A summary tutorial related to development.<br />
+2). A more general and convenient development scaffold.<br />
+3). Provide sdk and defi contract library to facilitate dapp development.<br />
+
+## 10Kswap is on the testnet. To preview
+
+[`https://10kswap.com`](https://10kswap.com)
+
+![preview](./docs/images/preview.png)
 
 ## Get started
 
@@ -14,228 +31,312 @@ cd 10k_swap-contracts
 #### Install dependencies
 
 ```
-npm ci
+yarn install
 ```
 
 #### Compile a contract
 
 ```
-npx hardhat starknet-compile contracts/l0k_erc20.cairo
+npx hardhat starknet-compile contracts/l0k_factory.cairo
 ```
 
 #### Run a test that interacts with the compiled contract
 
 ```
-npx hardhat test test_erc20.test.ts
+npx hardhat test l0k_factory.test.ts
 ```
-
-## Troubleshooting
 
 ## Branches
 
-- `main`
+- `main` Stable version
+- `develop` New PRs and features
 
-### Branch updating (for developers)
+## Contracts
 
-- New PRs and features should be targeted to the `develop` branch.
+### l0k_factory
 
-## Contracts interface
+[`l0k_factory.cairo`](./contracts/l0k_factory.cairo)
 
-### Il0kFactory
+- Mainnet Adddress: `-`
+- Goerli Adddress: `0x06c31f39524388c982045988de3788530605ed08b10389def2e7b1dd09d19308`
 
-#### `view` feeTo
+#### Events
 
-- Params: -
+```cairo
+func PairCreated(token0 : felt, token1 : felt, pair : felt, index : felt):
+end
+```
 
-- Returns:
+- `token0` is guaranteed to be strictly less than `token1` by sort order.
+- `pair`: token0 & token1 pair address
+- `index`: pair index, start from 0
 
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| feeTo | felt | -    |
+#### constructor
 
-#### `view` feeToSetter
+```cairo
+func constructor(pairClass : felt, feeToSetter : felt):
+end
+```
 
-- Params: -
+- `pairClass`: l0k_pair contract class hash
+- `feeToSetter`: feeTo address manager
 
-- Returns:
+#### Read Functions
 
-| Name        | Type | Desc |
-| ----------- | ---- | ---- |
-| feeToSetter | felt | -    |
+##### feeTo
 
-#### `view` getPair
+```cairo
+func feeTo() -> (feeTo : felt):
+end
+```
 
-- Params:
+- `RETURNS`: feeTo
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| tokenA | felt | -    |
-| tokenA | felt | -    |
+##### feeToSetter
 
-- Returns:
+```cairo
+func feeToSetter() -> (feeToSetter : felt):
+end
+```
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+- `RETURNS`: feeToSetter
 
-#### `view` allPairs
+##### getPair
 
-- Params:
+```cairo
+func getPair(token0 : felt, token1 : felt) -> (pair : felt):
+end
+```
 
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| index | felt | -    |
+- `token0`: -
+- `token1`: -
+- `RETURNS`: pair
 
-- Returns:
+##### allPairs
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+```cairo
+func allPairs(index : felt) -> (pair : felt):
+end
+```
 
-#### `view` allPairsLength
+- `index`: pair index
+- `RETURNS`: pair
 
-- Params: -
+##### allPairsLength
 
-- Returns:
+```cairo
+func allPairsLength() -> (length : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| length | felt | -    |
+- `RETURNS`: length
 
-#### `external` createPair
+#### Write Functions
 
-- Params:
+##### createPair
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| tokenA | felt | -    |
-| tokenB | felt | -    |
+```cairo
+func createPair(tokenA : felt, tokenB : felt) -> (pair : felt):
+end
+```
 
-- Returns:
+- `tokenA`: A token address
+- `tokenB`: B token address
+- `RETURNS`: pair
+- Emits `PairCreated`
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| pair | felt | -    |
+##### setFeeTo
 
-#### `external` setFeeTo
+```cairo
+func setFeeTo(feeTo : felt) -> ():
+end
+```
 
-- Params:
+- `feeTo`: -
 
-| Name  | Type | Desc |
-| ----- | ---- | ---- |
-| feeTo | felt | -    |
+##### setFeeToSetter
 
-- Returns: -
+```cairo
+func setFeeToSetter(feeToSetter : felt) -> ():
+end
+```
 
-#### `external` setFeeToSetter
+- `feeToSetter`: -
 
-- Params:
+### l0k_pair
 
-| Name           | Type | Desc |
-| -------------- | ---- | ---- |
-| setFeeToSetter | felt | -    |
+[`l0k_pair.cairo`](./contracts/l0k_pair.cairo)
 
-- Returns: -
+- ClassHash: `0x231adde42526bad434ca2eb983efdd64472638702f87f97e6e3c084f264e06f`
 
-### Il0kPair
+> ERC20 functions and events based on openzeppelin cairo, [click here](https://github.com/OpenZeppelin/cairo-contracts/blob/main/src/openzeppelin/token/erc20/library.cairo) for details.<br/>
+> Thanks to [openzeppelin](https://github.com/OpenZeppelin/cairo-contracts) for powering cairo.
 
-> ERC20 functions are ignored here
+#### Events
 
-#### `view` MINIMUM_LIQUIDITY
+##### Mint
 
-- Params: -
+```cairo
+func Mint(sender : felt, amount0 : Uint256, amount1 : Uint256):
+end
+```
 
-- Returns:
+- `sender` Minter
+- `amount0` Token0 amount
+- `amount1` Token1 amount
 
-| Name  | Type    | Desc |
-| ----- | ------- | ---- |
-| value | Uint256 | -    |
+##### Burn
 
-#### `view` factory
+```cairo
+func Burn(sender : felt, amount0 : Uint256, amount1 : Uint256, to : felt):
+end
+```
 
-- Params: -
+- `sender` Burner
+- `amount0` Token0 amount
+- `amount1` Token1 amount
+- `to` Recipient
 
-- Returns:
+##### Swap
 
-| Name    | Type | Desc |
-| ------- | ---- | ---- |
-| factory | felt | -    |
+```cairo
+func Swap(
+    sender : felt,
+    amount0In : Uint256,
+    amount1In : Uint256,
+    amount0Out : Uint256,
+    amount1Out : Uint256,
+    to : felt,
+):
+end
+```
 
-#### `view` token0
+- `sender` Swaper
+- `amount0In` Token0 in amount
+- `amount1In` Token1 in amount
+- `amount0Out` Token0 out amount
+- `amount1Out` Token1 out amount
+- `to` Recipient
 
-- Params: -
+##### Sync
 
-- Returns:
+```cairo
+func Sync(reserve0 : felt, reserve1 : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| token0 | felt | -    |
+- `reserve0` Token0 quantity in pair
+- `reserve1` Token1 quantity in pair
 
-#### `view` token1
+#### Read Functions
 
-- Params: -
+##### MINIMUM_LIQUIDITY
 
-- Returns:
+```cairo
+func MINIMUM_LIQUIDITY() -> (MINIMUM_LIQUIDITY : felt):
+end
+```
 
-| Name   | Type | Desc |
-| ------ | ---- | ---- |
-| token1 | felt | -    |
+- `MINIMUM_LIQUIDITY` -
 
-#### `view` getReserves
+##### factory
 
-- Params: -
+```cairo
+func factory() -> (factory : felt):
+end
+```
 
-- Returns:
+- `factory` l0k_factory contract
 
-| Name               | Type | Desc |
-| ------------------ | ---- | ---- |
-| reserve0           | felt | -    |
-| reserve1           | felt | -    |
-| blockTimestampLast | felt | -    |
+##### token0
 
-#### `view` price0CumulativeLast
+```cairo
+func token0() -> (token0 : felt):
+end
+```
 
-- Params: -
+- `token0` -
 
-- Returns:
+##### token1
 
-| Name   | Type    | Desc |
-| ------ | ------- | ---- |
-| price0 | Uint256 | -    |
+```cairo
+func token1() -> (token1 : felt):
+end
+```
 
-#### `view` price1CumulativeLast
+- `token1` -
 
-- Params: -
+##### blockTimestampLast
 
-- Returns:
+```cairo
+func blockTimestampLast() -> (blockTimestampLast : felt):
+end
+```
 
-| Name   | Type    | Desc |
-| ------ | ------- | ---- |
-| price1 | Uint256 | -    |
+- `blockTimestampLast` -
 
-#### `view` kLast
+##### price0CumulativeLast
 
-- Params: -
+```cairo
+func price0CumulativeLast() -> (price0CumulativeLast : felt):
+end
+```
 
-- Returns:
+- `price0CumulativeLast` -
 
-| Name  | Type    | Desc |
-| ----- | ------- | ---- |
-| kLast | Uint256 | -    |
+##### price1CumulativeLast
 
-#### `external` mint
+```cairo
+func price1CumulativeLast() -> (price1CumulativeLast : felt):
+end
+```
 
-- Params:
+- `price1CumulativeLast` -
 
-| Name | Type | Desc |
-| ---- | ---- | ---- |
-| to   | felt | -    |
+##### kLast
 
-- Returns:
+```cairo
+func kLast() -> (kLast : felt):
+end
+```
 
-| Name      | Type    | Desc |
-| --------- | ------- | ---- |
-| liquidity | Uint256 | -    |
+- `kLast` -
+
+##### getReserves
+
+```cairo
+func getReserves() -> (reserve0 : felt, reserve1 : felt, blockTimestampLast : felt):
+end
+```
+
+- `reserve0` Token0 quantity in pair
+- `reserve1` reserve1 quantity in pair
+- `blockTimestampLast` -
+
+#### Write Functions
+
+##### initialize
+
+```cairo
+func initialize() -> (token0 : felt, token1 : felt):
+end
+```
+
+> called once by the factory at time of deployment
+
+- `token0` -
+- `token1` -
+
+##### mint
+
+```cairo
+func mint(to : felt) -> (liquidity : Uint256):
+end
+```
+
+- `to` Recipient
+- `liquidity` Pair token quantity
+- Emits `Mint`, `Sync`, `Transfer<sub>ERC20</sub>`.
 
 #### `external` burn
 
@@ -291,7 +392,12 @@ npx hardhat test test_erc20.test.ts
 
 - Returns: -
 
-### Il0kRouter
+### l0k_router
+
+[`l0k_router.cairo`](./contracts/l0k_router.cairo)
+
+- Mainnet Adddress: `-`
+- Goerli Adddress: `0x00975910cd99bc56bd289eaaa5cee6cd557f0ddafdb2ce6ebea15b158eb2c664`
 
 #### `view` factory
 

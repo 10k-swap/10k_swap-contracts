@@ -51,6 +51,14 @@ end
 #
 
 @view
+func factory{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (
+    factory : felt
+):
+    let (value) = _factory.read()
+    return (factory=value)
+end
+
+@view
 func quote{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
     amountA : Uint256, reserveA : felt, reserveB : felt
 ) -> (amountB : Uint256):
