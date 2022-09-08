@@ -5,8 +5,8 @@ import {
   StarknetContract,
   StarknetContractFactory
 } from "hardhat/types";
-import { toFelt } from "starknet/dist/utils/number";
-import { bnToUint256 } from "starknet/dist/utils/uint256";
+import { toBN, toFelt } from "starknet/dist/utils/number";
+import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE, MAX_UINT256 } from "./constants";
 import SwapExactTokensForTokensCheckers from "./router/SwapExactTokensForTokensCheckers";
 import SwapTokensForExactTokensCheckers from "./router/SwapTokensForExactTokensCheckers";
@@ -93,6 +93,79 @@ describe("Amm router", function () {
 
     console.log("l0kRouterContract.address:", l0kRouterContract.address);
   });
+
+
+  it('quote', async () => {
+    {
+      const { amountB } = await l0kRouterContract.call('quote', { amountA: bnToUint256(1), reserveA: 100, reserveB: 200 })
+      expect(uint256ToBN((amountB)).eq(toBN(2))).to.true
+    }
+    {
+      const { amountB } = await l0kRouterContract.call('quote', { amountA: bnToUint256(2), reserveA: 200, reserveB: 100 })
+      expect(uint256ToBN((amountB)).eq(toBN(1))).to.true
+    }
+    try {
+      await l0kRouterContract.call('quote', { amountA: bnToUint256(0), reserveA: 100, reserveB: 200 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IA/i.test(error.message)).to.true
+    }
+    try {
+      await l0kRouterContract.call('quote', { amountA: bnToUint256(1), reserveA: 0, reserveB: 200 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+    try {
+      await l0kRouterContract.call('quote', { amountA: bnToUint256(1), reserveA: 100, reserveB: 0 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+  })
+
+  it('getAmountOut', async () => {
+    const { amountOut } = await l0kRouterContract.call('getAmountOut', { amountIn: bnToUint256(2), reserveIn: 100, reserveOut: 100 })
+    expect(uint256ToBN(amountOut).eq(toBN(1))).to.true
+
+    try {
+      await l0kRouterContract.call('getAmountOut', { amountIn: bnToUint256(2), reserveIn: 100, reserveOut: 100 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IIA/i.test(error.message)).to.true
+    }
+
+    try {
+      await l0kRouterContract.call('getAmountOut', { amountIn: bnToUint256(2), reserveIn: 0, reserveOut: 100 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+
+    try {
+      await l0kRouterContract.call('getAmountOut', { amountIn: bnToUint256(2), reserveIn: 100, reserveOut: 0 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+  })
+
+  it('getAmountIn', async () => {
+    const { amountIn } = await l0kRouterContract.call('getAmountIn', { amountOut: bnToUint256(1), reserveIn: 100, reserveOut: 100 })
+    expect(uint256ToBN(amountIn).eq(toBN(2))).to.true
+
+    try {
+      await l0kRouterContract.call('getAmountIn', { amountOut: bnToUint256(0), reserveIn: 100, reserveOut: 100 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IOA/i.test(error.message)).to.true
+    }
+
+    try {
+      await l0kRouterContract.call('getAmountIn', { amountOut: bnToUint256(1), reserveIn: 0, reserveOut: 100 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+
+    try {
+      await l0kRouterContract.call('getAmountIn', { amountOut: bnToUint256(1), reserveIn: 100, reserveOut: 0 })
+    } catch (error: any) {
+      expect(/10kSwapLibrary: IL/i.test(error.message)).to.true
+    }
+  })
 
   it("Test swapExactTokensForTokens", async function () {
     const pair = computePairAddress(
