@@ -168,3 +168,18 @@ export async function getTokenBalances(account: OpenZeppelinAccount, [tokenACont
     balanceTokenB: uint256ToBN(balanceTokenB).toString()
   };
 }
+
+export function isEqualInRange(x: JSBI, y: JSBI, range = JSBI.BigInt(10)) {
+  if (JSBI.equal(x, y)) {
+    return true
+  }
+
+  const [max, min] = JSBI.greaterThan(x, y) ? [x, y] : [y, x]
+  const diff = JSBI.subtract(max, min)
+
+  if (JSBI.lessThanOrEqual(diff, range)) {
+    return true
+  }
+
+  return false
+}

@@ -1,5 +1,6 @@
 import JSBI from "jsbi"
 import { FEES_DENOMINATOR, FEES_NUMERATOR, ONE, ZERO } from "../constants";
+import { isEqualInRange } from "../util";
 
 function getAmountInA(outputAmount: JSBI, [reserve0, reserve1]: [string, string]): JSBI | undefined {
   if (
@@ -49,8 +50,8 @@ export default class SwapTokensForExactTokensCheckers {
 
     if (!this.amountA) return false
 
-    const aEqual = JSBI.equal(debitAmountA, JSBI.BigInt(this.amountA))
-    const bEqual = JSBI.equal(JSBI.BigInt(amountBToSwap), getAmountB)
+    const aEqual = isEqualInRange(debitAmountA, JSBI.BigInt(this.amountA))
+    const bEqual = isEqualInRange(JSBI.BigInt(amountBToSwap), getAmountB)
 
     return aEqual && bEqual
   }
@@ -62,8 +63,8 @@ export default class SwapTokensForExactTokensCheckers {
 
     if (!this.amountA) return false
 
-    const aEqual = JSBI.equal(diffReservesA, this.amountA)
-    const bEqual = JSBI.equal(JSBI.BigInt(amountBToSwap), diffReservesB)
+    const aEqual = isEqualInRange(diffReservesA, this.amountA)
+    const bEqual = isEqualInRange(JSBI.BigInt(amountBToSwap), diffReservesB)
 
     return aEqual && bEqual
   }

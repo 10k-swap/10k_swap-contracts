@@ -1,5 +1,5 @@
 import JSBI from "jsbi"
-import { sqrt } from "../util"
+import { isEqualInRange, sqrt } from "../util"
 import { FIVE, ZERO } from "../constants"
 
 function getTotalSupplyAdjusted(totalSupply: string, [reserve0, reserve1]: [string, string], feeOn: boolean, kLast: string) {
@@ -66,7 +66,7 @@ export default class RemoveLiquidityCheckers {
     const { userLPs, amountsToRemove } = this.amounts
     const amount = JSBI.subtract(JSBI.BigInt(userLPs[0]), JSBI.BigInt(userLPs[1]))
 
-    return JSBI.equal(JSBI.BigInt(amountsToRemove), JSBI.BigInt(amount))
+    return isEqualInRange(JSBI.BigInt(amountsToRemove), JSBI.BigInt(amount))
   }
 
   checkUserBalances(): boolean {
@@ -82,8 +82,8 @@ export default class RemoveLiquidityCheckers {
     const userGetAmountA = JSBI.subtract(JSBI.BigInt(balancesesA[1]), JSBI.BigInt(balancesesA[0]))
     const userGetAomuntB = JSBI.subtract(JSBI.BigInt(balancesesB[1]), JSBI.BigInt(balancesesB[0]))
 
-    const aEqual = JSBI.equal(userGetAmountA, A)
-    const bEqual = JSBI.equal(userGetAomuntB, B)
+    const aEqual = isEqualInRange(userGetAmountA, A)
+    const bEqual = isEqualInRange(userGetAomuntB, B)
 
     return aEqual && bEqual
   }
@@ -99,8 +99,8 @@ export default class RemoveLiquidityCheckers {
       kLast
     )
 
-    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[0]), JSBI.BigInt(reserveses0[1])), A)
-    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[0]), JSBI.BigInt(reserveses1[1])), B)
+    const aEqual = isEqualInRange(JSBI.subtract(JSBI.BigInt(reserveses0[0]), JSBI.BigInt(reserveses0[1])), A)
+    const bEqual = isEqualInRange(JSBI.subtract(JSBI.BigInt(reserveses1[0]), JSBI.BigInt(reserveses1[1])), B)
 
     return aEqual && bEqual
   }
@@ -109,6 +109,6 @@ export default class RemoveLiquidityCheckers {
     const { reserveses0, reserveses1, LPTotalSupplys, kLast, amountsToRemove } = this.amounts
     const totalSupplyAdjusted = getTotalSupplyAdjusted(LPTotalSupplys[0], [reserveses0[0], reserveses1[0]], true, kLast)
 
-    return JSBI.equal(JSBI.BigInt(LPTotalSupplys[1]), JSBI.subtract(totalSupplyAdjusted, JSBI.BigInt(amountsToRemove)))
+    return isEqualInRange(JSBI.BigInt(LPTotalSupplys[1]), JSBI.subtract(totalSupplyAdjusted, JSBI.BigInt(amountsToRemove)))
   }
 }

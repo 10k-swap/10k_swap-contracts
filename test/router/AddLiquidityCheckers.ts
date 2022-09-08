@@ -1,6 +1,8 @@
 import JSBI from "jsbi"
-import { sqrt } from "../util"
-import { MINIMUM_LIQUIDITY, ZERO } from "../constants"
+import { sqrt, isEqualInRange } from "../util"
+import {
+  MINIMUM_LIQUIDITY, ZERO
+} from "../constants"
 
 function getLiquidityMinted(totalSupply: string, tokenAmounts: [string, string], reserves: [string, string]): string | undefined {
   let liquidity: JSBI
@@ -77,7 +79,7 @@ export default class AddLiquidityCheckers {
     ])
     if (liquidityMinted) {
       const amount = JSBI.subtract(JSBI.BigInt(userLPs[1]), JSBI.BigInt(userLPs[0]))
-      return JSBI.equal(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
+      return isEqualInRange(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
     }
     return false
   }
@@ -94,8 +96,8 @@ export default class AddLiquidityCheckers {
     const userDebitAmountA = JSBI.subtract(JSBI.BigInt(balancesesA[0]), JSBI.BigInt(balancesesA[1]))
     const userDebitAomuntB = JSBI.subtract(JSBI.BigInt(balancesesB[0]), JSBI.BigInt(balancesesB[1]))
 
-    const aEqual = JSBI.equal(userDebitAmountA, amountAOptimal)
-    const bEqual = JSBI.equal(userDebitAomuntB, amountBOptimal)
+    const aEqual = isEqualInRange(userDebitAmountA, amountAOptimal)
+    const bEqual = isEqualInRange(userDebitAomuntB, amountBOptimal)
 
     return aEqual && bEqual
   }
@@ -110,8 +112,8 @@ export default class AddLiquidityCheckers {
       JSBI.BigInt(reserveses1[0])
     )
 
-    const aEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), amountAOptimal)
-    const bEqual = JSBI.equal(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), amountBOptimal)
+    const aEqual = isEqualInRange(JSBI.subtract(JSBI.BigInt(reserveses0[1]), JSBI.BigInt(reserveses0[0])), amountAOptimal)
+    const bEqual = isEqualInRange(JSBI.subtract(JSBI.BigInt(reserveses1[1]), JSBI.BigInt(reserveses1[0])), amountBOptimal)
 
     return aEqual && bEqual
   }
@@ -122,13 +124,9 @@ export default class AddLiquidityCheckers {
       reserveses0[0],
       reserveses1[0]
     ])
-    console.log('liquidityMinted:', liquidityMinted?.toString())
     if (liquidityMinted) {
       const amount = JSBI.subtract(JSBI.BigInt(LPTotalSupplys[1]), JSBI.BigInt(LPTotalSupplys[0]))
-      console.log('LPTotalSupplys1:', LPTotalSupplys[1])
-      console.log('LPTotalSupplys0:', LPTotalSupplys[0])
-      console.log('amount:', amount?.toString())
-      return JSBI.equal(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
+      return isEqualInRange(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
     }
     return false
   }

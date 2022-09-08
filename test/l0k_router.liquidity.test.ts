@@ -15,7 +15,7 @@ import {
   envAccountOZ,
   expandTo18Decimals,
   getPairAmounts,
-  getTokenBalances
+  getTokenBalances,
 } from "./util";
 
 async function getLPBalance(account: OpenZeppelinAccount, l0kPairContract: StarknetContract) {
