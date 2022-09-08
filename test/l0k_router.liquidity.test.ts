@@ -8,32 +8,15 @@ import {
 import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
 import { MAX_FEE } from "./constants";
 import AddLiquidityCheckers from "./router/AddLiquidityCheckers";
+import RemoveLiquidityCheckers from "./router/RemoveLiquidityCheckers";
 import {
   computePairAddress,
   ensureEnvVar,
   envAccountOZ,
-  expandTo18Decimals
+  expandTo18Decimals,
+  getPairAmounts,
+  getTokenBalances
 } from "./util";
-
-async function getAmounts({ l0kPairContract }: { l0kPairContract: StarknetContract }) {
-  try {
-    const [{ totalSupply }, { reserve0, reserve1 }] = await Promise.all([
-      l0kPairContract.call("totalSupply"),
-      l0kPairContract.call('getReserves')
-    ])
-    return {
-      totalSupply: uint256ToBN(totalSupply).toString(),
-      reserve0: (reserve0).toString(),
-      reserve1: (reserve1).toString(),
-    }
-  } catch (error) {
-    return {
-      totalSupply: '0',
-      reserve0: '0',
-      reserve1: '0',
-    }
-  }
-}
 
 async function getLPBalance(account: OpenZeppelinAccount, l0kPairContract: StarknetContract) {
   try {
@@ -47,20 +30,7 @@ async function getLPBalance(account: OpenZeppelinAccount, l0kPairContract: Stark
   }
 }
 
-async function accountTokenAB(account: OpenZeppelinAccount, [tokenAContract, tokenBContract]: [StarknetContract, StarknetContract]) {
-  const { balance: balanceTokenA } = await tokenAContract.call("balanceOf", {
-    account: account.address,
-  });
-  const { balance: balanceTokenB } = await tokenBContract.call("balanceOf", {
-    account: account.address,
-  });
-  return {
-    balanceTokenA: uint256ToBN(balanceTokenA).toString(),
-    balanceTokenB: uint256ToBN(balanceTokenB).toString()
-  };
-}
-
-describe("Amm router ", function () {
+describe("Amm Router Liquidity", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
   const TOKEN_B = ensureEnvVar("TOKEN_B");
   const PAIR_CONTRACT_CLASS_HASH = ensureEnvVar("PAIR_CONTRACT_CLASS_HASH");
@@ -113,8 +83,8 @@ describe("Amm router ", function () {
       { balanceTokenA: balanceTokenABefore, balanceTokenB: balanceTokenBBefore }
     ] = await Promise.all([
       getLPBalance(account0, l0kPairContract),
-      getAmounts({ l0kPairContract }),
-      accountTokenAB(account0, [tokenAContract, tokenBContract])
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account0, [tokenAContract, tokenBContract])
     ])
 
     const amountA = expandTo18Decimals(1000);
@@ -152,6 +122,7 @@ describe("Amm router ", function () {
         },
       },
     ];
+
     await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
     const [
@@ -160,8 +131,8 @@ describe("Amm router ", function () {
       { balanceTokenA, balanceTokenB }
     ] = await Promise.all([
       getLPBalance(account0, l0kPairContract),
-      getAmounts({ l0kPairContract }),
-      accountTokenAB(account0, [tokenAContract, tokenBContract])
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account0, [tokenAContract, tokenBContract])
     ])
 
     const addLiquidityCheckers = new AddLiquidityCheckers({
@@ -183,74 +154,80 @@ describe("Amm router ", function () {
     expect(addLiquidityCheckers.checkUserBalances()).to.be.true;
   });
 
-  // it("Reomve Liquidity", async function () {
-  //   const pair = computePairAddress(
-  //     FACTORY_CONTRACT_ADDRESS,
-  //     PAIR_CONTRACT_CLASS_HASH,
-  //     TOKEN_A,
-  //     TOKEN_B
-  //   );
-  //   const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
-  //   const amountRemove = expandTo18Decimals(10);
+  it("Test reomveLiquidity", async function () {
+    const pair = computePairAddress(
+      FACTORY_CONTRACT_ADDRESS,
+      PAIR_CONTRACT_CLASS_HASH,
+      TOKEN_A,
+      TOKEN_B
+    );
+    const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
+    const amountRemove = expandTo18Decimals(10);
 
-  //   const { balance: balanceLiquidityBefore } = await l0kPairContract.call(
-  //     "balanceOf",
-  //     { account: account0.address, }
-  //   );
-  //   console.log("LiquidityReomveBeforeBalance:", uint256ToBN(balanceLiquidityBefore).toString());
-  //   {
-  //     const { balanceTokenA, balanceTokenB } = await accountTokenAB(account0, [tokenAContract, tokenBContract])
-  //     console.log("ReomveBeforeUserBalanceA:", balanceTokenA);
-  //     console.log("ReomveBeforeUserBalanceB:", balanceTokenB);
-  //   }
-  //   {
-  //     const { totalSupply, reserve0, reserve1 } = await getAmounts({ l0kPairContract })
-  //     console.log("LPtotalSupplyBefore:", (totalSupply).toString());
-  //     console.log("reserve0Before:", (reserve0).toString());
-  //     console.log("reserve1Before:", (reserve1).toString());
-  //   }
-  //   const invokeArray = [
-  //     {
-  //       toContract: l0kPairContract,
-  //       functionName: "approve",
-  //       calldata: {
-  //         spender: l0kRouterContract.address,
-  //         amount: bnToUint256(amountRemove.toString()),
-  //       },
-  //     },
-  //     {
-  //       toContract: l0kRouterContract,
-  //       functionName: "removeLiquidity",
-  //       calldata: {
-  //         tokenA: TOKEN_A,
-  //         tokenB: TOKEN_B,
-  //         liquidity: bnToUint256(amountRemove.toString()),
-  //         amountAMin: bnToUint256(0),
-  //         amountBMin: bnToUint256(0),
-  //         to: account0.address,
-  //         deadline: getDeadline(),
-  //       },
-  //     },
-  //   ];
+    const [
+      userLPBalanceBefore,
+      { totalSupply: totalSupplyBefore, reserve0: reserve0Before, reserve1: reserve1Before, kLast },
+      { balanceTokenA: balanceTokenABefore, balanceTokenB: balanceTokenBBefore }
+    ] = await Promise.all([
+      getLPBalance(account0, l0kPairContract),
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account0, [tokenAContract, tokenBContract])
+    ])
 
-  //   await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
+    const invokeArray = [
+      {
+        toContract: l0kPairContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(amountRemove.toString()),
+        },
+      },
+      {
+        toContract: l0kRouterContract,
+        functionName: "removeLiquidity",
+        calldata: {
+          tokenA: TOKEN_A,
+          tokenB: TOKEN_B,
+          liquidity: bnToUint256(amountRemove.toString()),
+          amountAMin: bnToUint256(0),
+          amountBMin: bnToUint256(0),
+          to: account0.address,
+          deadline: getDeadline(),
+        },
+      },
+    ];
 
-  //   const { balance: balanceAfter } = await l0kPairContract.call("balanceOf", {
-  //     account: account0.address,
-  //   });
+    await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
-  //   console.log("LiquidityReomveAfterBalance:", uint256ToBN(balanceAfter).toString());
+    const [
+      balance,
+      { totalSupply, reserve0, reserve1 },
+      { balanceTokenA, balanceTokenB }
+    ] = await Promise.all([
+      getLPBalance(account0, l0kPairContract),
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account0, [tokenAContract, tokenBContract])
+    ])
 
-  //   {
-  //     const { balanceTokenA, balanceTokenB } = await accountTokenAB(account0, [tokenAContract, tokenBContract])
-  //     console.log("ReomveAfterBalanceA:", balanceTokenA);
-  //     console.log("ReomveAfterBalanceB:", balanceTokenB);
-  //   }
-  //   {
-  //     const { totalSupply, reserve0, reserve1 } = await getAmounts({ l0kPairContract })
-  //     console.log("LPtotalSupplyAfter:", (totalSupply).toString());
-  //     console.log("reserve0After:", (reserve0).toString());
-  //     console.log("reserve1After:", (reserve1).toString());
-  //   }
-  // });
+    const removeLiquidityCheckers = new RemoveLiquidityCheckers({
+      userLPs: [userLPBalanceBefore, balance],
+      LPTotalSupplys: [totalSupplyBefore, totalSupply],
+      balancesesA: [balanceTokenABefore, balanceTokenA],
+      balancesesB: [balanceTokenBBefore, balanceTokenB],
+      reserveses0: [reserve0Before, reserve0],
+      reserveses1: [reserve1Before, reserve1],
+      amountsToRemove: amountRemove.toString(),
+      kLast
+    })
+
+    expect(removeLiquidityCheckers.checkLPtotalSupply()).to.be.true;
+
+    expect(removeLiquidityCheckers.checkUserLPBalance()).to.be.true;
+
+    expect(removeLiquidityCheckers.checkPairReserves()).to.be.true;
+
+    expect(removeLiquidityCheckers.checkUserBalances()).to.be.true;
+
+  });
 });

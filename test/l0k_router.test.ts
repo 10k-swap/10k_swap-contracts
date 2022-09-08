@@ -5,50 +5,25 @@ import {
   StarknetContract,
   StarknetContractFactory
 } from "hardhat/types";
-import { toBN, toFelt } from "starknet/dist/utils/number";
-import { bnToUint256, uint256ToBN } from "starknet/dist/utils/uint256";
-import { MAX_FEE } from "./constants";
+import { toFelt } from "starknet/dist/utils/number";
+import { bnToUint256 } from "starknet/dist/utils/uint256";
+import { MAX_FEE, MAX_UINT256 } from "./constants";
+import SwapExactTokensForTokensCheckers from "./router/SwapExactTokensForTokensCheckers";
+import SwapTokensForExactTokensCheckers from "./router/SwapTokensForExactTokensCheckers";
 import {
   computePairAddress,
   ensureEnvVar,
   envAccountOZ,
-  expandTo18Decimals
+  expandTo18Decimals,
+  getTokenBalances,
+  getPairAmounts
 } from "./util";
-
-async function getAmounts({ l0kPairContract }: { l0kPairContract: StarknetContract }) {
-  try {
-    const [{ reserve0, reserve1 }] = await Promise.all([
-      l0kPairContract.call('getReserves')
-    ])
-    return {
-      reserve0: (reserve0).toString(),
-      reserve1: (reserve1).toString(),
-    }
-  } catch (error) {
-    return {
-      reserve0: '0',
-      reserve1: '0',
-    }
-  }
-}
-
-async function accountTokenAB(account: OpenZeppelinAccount, [tokenAContract, tokenBContract]: [StarknetContract, StarknetContract]) {
-  const { balance: balanceTokenA } = await tokenAContract.call("balanceOf", {
-    account: account.address,
-  });
-  const { balance: balanceTokenB } = await tokenBContract.call("balanceOf", {
-    account: account.address,
-  });
-  return { balanceTokenA, balanceTokenB };
-}
 
 describe("Amm router", function () {
   const TOKEN_A = ensureEnvVar("TOKEN_A");
   const TOKEN_B = ensureEnvVar("TOKEN_B");
   const PAIR_CONTRACT_CLASS_HASH = ensureEnvVar("PAIR_CONTRACT_CLASS_HASH");
   const FACTORY_CONTRACT_ADDRESS = ensureEnvVar("FACTORY_CONTRACT_ADDRESS");
-
-  const AB_SCALE = 10;
 
   let l0kPairContractFactory: StarknetContractFactory;
   let l0kRouterContract: StarknetContract;
@@ -59,6 +34,43 @@ describe("Amm router", function () {
 
   function getDeadline() {
     return parseInt(new Date().getTime() / 1000 + "") + 30000;
+  }
+
+  async function addLiquidity() {
+    const invokeArray = [
+      {
+        toContract: tokenAContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(expandTo18Decimals(10000).toString()),
+        },
+      },
+      {
+        toContract: tokenBContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(expandTo18Decimals(10000).toString()),
+        },
+      },
+      {
+        toContract: l0kRouterContract,
+        functionName: "addLiquidity",
+        calldata: {
+          tokenA: TOKEN_A,
+          tokenB: TOKEN_B,
+          amountADesired: bnToUint256(expandTo18Decimals(10000).toString()),
+          amountBDesired: bnToUint256(expandTo18Decimals(10000).toString()),
+          amountAMin: bnToUint256(0),
+          amountBMin: bnToUint256(0),
+          to: account0.address,
+          deadline: getDeadline(),
+        },
+      },
+    ];
+
+    await account0.multiInvoke(invokeArray, { maxFee: MAX_FEE });
   }
 
   before(async function () {
@@ -91,17 +103,17 @@ describe("Amm router", function () {
     );
     const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
 
-    const { balanceTokenA, balanceTokenB } = await accountTokenAB(account1, [tokenAContract, tokenBContract]);
-    console.log("balanceTokenABefore:", uint256ToBN(balanceTokenA).toString());
-    console.log("balanceTokenBBefore:", uint256ToBN(balanceTokenB).toString());
+    await addLiquidity()
 
-    {
-      const { reserve0, reserve1 } = await getAmounts({ l0kPairContract })
-      console.log("reserve0Before:", (reserve0).toString());
-      console.log("reserve1Before:", (reserve1).toString());
-    }
+    const [
+      { reserve0: reserve0Before, reserve1: reserve1Before },
+      { balanceTokenA: balanceTokenABefore, balanceTokenB: balanceTokenBBefore }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
 
-    const inAmount = expandTo18Decimals(100);
+    const inAmountA = expandTo18Decimals(10);
     const path = [toFelt(TOKEN_A), toFelt(TOKEN_B)];
     const invokeArray = [
       {
@@ -109,14 +121,14 @@ describe("Amm router", function () {
         functionName: "approve",
         calldata: {
           spender: l0kRouterContract.address,
-          amount: bnToUint256(inAmount.toString()),
+          amount: bnToUint256(inAmountA.toString()),
         },
       },
       {
         toContract: l0kRouterContract,
         functionName: "swapExactTokensForTokens",
         calldata: {
-          amountIn: bnToUint256(inAmount.toString()),
+          amountIn: bnToUint256(inAmountA.toString()),
           amountOutMin: bnToUint256(0),
           path,
           to: account1.address,
@@ -127,49 +139,64 @@ describe("Amm router", function () {
 
     await account1.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
-    const { balanceTokenA: swapedBalanceTokenA, balanceTokenB: swapedBalanceTokenB } = await accountTokenAB(account1, [tokenAContract, tokenBContract]);
-    console.log("balanceTokenAAfter:", uint256ToBN(swapedBalanceTokenA).toString());
-    console.log("balanceTokenBAfter:", uint256ToBN(swapedBalanceTokenB).toString());
-    {
-      const { reserve0, reserve1 } = await getAmounts({ l0kPairContract })
-      console.log("reserve0Before:", (reserve0).toString());
-      console.log("reserve1Before:", (reserve1).toString());
-    }
+    const [
+      { reserve0, reserve1 },
+      { balanceTokenA, balanceTokenB }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
 
-    expect(
-      uint256ToBN(balanceTokenA).sub(toBN(inAmount.toString())).eq(uint256ToBN(swapedBalanceTokenA))
-    ).to.be.true;
+    const swapCheckers = new SwapExactTokensForTokensCheckers({
+      balancesesA: [balanceTokenABefore, balanceTokenA],
+      balancesesB: [balanceTokenBBefore, balanceTokenB],
+      reserveses0: [reserve0Before, reserve0],
+      reserveses1: [reserve1Before, reserve1],
+      amountAToSwap: inAmountA.toString()
+    })
 
-    expect(
-      uint256ToBN(swapedBalanceTokenB).gt(uint256ToBN(balanceTokenB))
-    ).to.be.true;
+    expect(swapCheckers.checkPairReserves()).to.be.true;
+
+    expect(swapCheckers.checkUserBalances()).to.be.true;
 
   });
 
   it("Test swapExactTokensForTokensSupportingFeeOnTransferTokens", async function () {
-    const {
-      balanceTokenA: balanceTokenABefore,
-      balanceTokenB: balanceTokenBBefore,
-    } = await accountTokenAB(account1, [tokenAContract, tokenBContract]);
 
-    const inAmount = expandTo18Decimals(100);
+    const pair = computePairAddress(
+      FACTORY_CONTRACT_ADDRESS,
+      PAIR_CONTRACT_CLASS_HASH,
+      TOKEN_A,
+      TOKEN_B
+    );
+    const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
 
+    await addLiquidity()
+
+    const [
+      { reserve0: reserve0Before, reserve1: reserve1Before },
+      { balanceTokenA: balanceTokenABefore, balanceTokenB: balanceTokenBBefore }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
+
+    const inAmountA = expandTo18Decimals(10);
     const path = [toFelt(TOKEN_A), toFelt(TOKEN_B)];
-
     const invokeArray = [
       {
         toContract: tokenAContract,
         functionName: "approve",
         calldata: {
           spender: l0kRouterContract.address,
-          amount: bnToUint256(inAmount.toString()),
+          amount: bnToUint256(inAmountA.toString()),
         },
       },
       {
         toContract: l0kRouterContract,
         functionName: "swapExactTokensForTokensSupportingFeeOnTransferTokens",
         calldata: {
-          amountIn: bnToUint256(inAmount.toString()),
+          amountIn: bnToUint256(inAmountA.toString()),
           amountOutMin: bnToUint256(0),
           path,
           to: account1.address,
@@ -180,14 +207,94 @@ describe("Amm router", function () {
 
     await account1.multiInvoke(invokeArray, { maxFee: MAX_FEE });
 
-    const {
-      balanceTokenA: balanceTokenAAfter,
-      balanceTokenB: balanceTokenBAfter,
-    } = await accountTokenAB(account1, [tokenAContract, tokenBContract]);
+    const [
+      { reserve0, reserve1 },
+      { balanceTokenA, balanceTokenB }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
 
-    expect(uint256ToBN(balanceTokenABefore).gt(uint256ToBN(balanceTokenAAfter)))
-      .to.be.true;
-    expect(uint256ToBN(balanceTokenBBefore).gt(uint256ToBN(balanceTokenBAfter)))
-      .to.be.false;
+    const swapCheckers = new SwapExactTokensForTokensCheckers({
+      balancesesA: [balanceTokenABefore, balanceTokenA],
+      balancesesB: [balanceTokenBBefore, balanceTokenB],
+      reserveses0: [reserve0Before, reserve0],
+      reserveses1: [reserve1Before, reserve1],
+      amountAToSwap: inAmountA.toString()
+    })
+
+    expect(swapCheckers.checkPairReserves()).to.be.true;
+
+    expect(swapCheckers.checkUserBalances()).to.be.true;
+
   });
+
+  it("Test swapTokensForExactTokens", async function () {
+    const pair = computePairAddress(
+      FACTORY_CONTRACT_ADDRESS,
+      PAIR_CONTRACT_CLASS_HASH,
+      TOKEN_A,
+      TOKEN_B
+    );
+    const l0kPairContract = l0kPairContractFactory.getContractAt(pair);
+
+    await addLiquidity()
+
+    const [
+      { reserve0: reserve0Before, reserve1: reserve1Before },
+      { balanceTokenA: balanceTokenABefore, balanceTokenB: balanceTokenBBefore }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
+
+    const outAmountB = expandTo18Decimals(100);
+
+    const path = [toFelt(TOKEN_A), toFelt(TOKEN_B)];
+    const invokeArray = [
+      {
+        toContract: tokenAContract,
+        functionName: "approve",
+        calldata: {
+          spender: l0kRouterContract.address,
+          amount: bnToUint256(MAX_UINT256.toString()),
+        },
+      },
+      {
+        toContract: l0kRouterContract,
+        functionName: "swapTokensForExactTokens",
+        calldata: {
+          amountOut: bnToUint256(outAmountB.toString()),
+          amountInMax: bnToUint256(MAX_UINT256.toString()),
+          path,
+          to: account1.address,
+          deadline: getDeadline(),
+        },
+      },
+    ];
+
+    await account1.multiInvoke(invokeArray, { maxFee: MAX_FEE });
+
+    const [
+      { reserve0, reserve1 },
+      { balanceTokenA, balanceTokenB }
+    ] = await Promise.all([
+      getPairAmounts({ l0kPairContract }),
+      getTokenBalances(account1, [tokenAContract, tokenBContract])
+    ])
+
+    const swapCheckers = new SwapTokensForExactTokensCheckers({
+      balancesesA: [balanceTokenABefore, balanceTokenA],
+      balancesesB: [balanceTokenBBefore, balanceTokenB],
+      reserveses0: [reserve0Before, reserve0],
+      reserveses1: [reserve1Before, reserve1],
+      amountBToSwap: outAmountB.toString()
+    })
+
+    expect(swapCheckers.checkPairReserves()).to.be.true;
+
+    expect(swapCheckers.checkUserBalances()).to.be.true;
+
+  });
+
 });
