@@ -126,7 +126,7 @@ export default class AddLiquidityCheckers {
     ])
     if (liquidityMinted) {
       const amount = JSBI.subtract(JSBI.BigInt(LPTotalSupplys[1]), JSBI.BigInt(LPTotalSupplys[0]))
-      return isEqualInRange(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount))
+      return isEqualInRange(JSBI.BigInt(liquidityMinted), JSBI.BigInt(amount), JSBI.BigInt(100))
     }
     return false
   }
