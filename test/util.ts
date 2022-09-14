@@ -113,50 +113,58 @@ export function computePairAddress(
 }
 
 export function expandTo18Decimals(n: number): BigNumber {
-  return BigNumber.from(n).mul(BigNumber.from(10).pow(18))
+  return BigNumber.from(n).mul(BigNumber.from(10).pow(18));
 }
 
 // mock the on-chain sqrt function
 export function sqrt(y: JSBI): JSBI {
-  let z: JSBI = ZERO
-  let x: JSBI
+  let z: JSBI = ZERO;
+  let x: JSBI;
   if (JSBI.greaterThan(y, THREE)) {
-    z = y
-    x = JSBI.add(JSBI.divide(y, TWO), ONE)
+    z = y;
+    x = JSBI.add(JSBI.divide(y, TWO), ONE);
     while (JSBI.lessThan(x, z)) {
-      z = x
-      x = JSBI.divide(JSBI.add(JSBI.divide(y, x), x), TWO)
+      z = x;
+      x = JSBI.divide(JSBI.add(JSBI.divide(y, x), x), TWO);
     }
   } else if (JSBI.notEqual(y, ZERO)) {
-    z = ONE
+    z = ONE;
   }
-  return z
+  return z;
 }
 
-export async function getPairAmounts({ l0kPairContract }: { l0kPairContract: StarknetContract }) {
+export async function getPairAmounts({
+  l0kPairContract,
+}: {
+  l0kPairContract: StarknetContract;
+}) {
   try {
-    const [{ totalSupply }, { reserve0, reserve1 }, { kLast }] = await Promise.all([
-      l0kPairContract.call("totalSupply"),
-      l0kPairContract.call('getReserves'),
-      l0kPairContract.call('kLast')
-    ])
+    const [{ totalSupply }, { reserve0, reserve1 }, { kLast }] =
+      await Promise.all([
+        l0kPairContract.call("totalSupply"),
+        l0kPairContract.call("getReserves"),
+        l0kPairContract.call("kLast"),
+      ]);
     return {
       totalSupply: uint256ToBN(totalSupply).toString(),
-      reserve0: (reserve0).toString(),
-      reserve1: (reserve1).toString(),
-      kLast: uint256ToBN(kLast).toString()
-    }
+      reserve0: reserve0.toString(),
+      reserve1: reserve1.toString(),
+      kLast: uint256ToBN(kLast).toString(),
+    };
   } catch (error) {
     return {
-      totalSupply: '0',
-      reserve0: '0',
-      reserve1: '0',
-      kLast: '0'
-    }
+      totalSupply: "0",
+      reserve0: "0",
+      reserve1: "0",
+      kLast: "0",
+    };
   }
 }
 
-export async function getTokenBalances(account: OpenZeppelinAccount, [tokenAContract, tokenBContract]: [StarknetContract, StarknetContract]) {
+export async function getTokenBalances(
+  account: OpenZeppelinAccount,
+  [tokenAContract, tokenBContract]: [StarknetContract, StarknetContract]
+) {
   const { balance: balanceTokenA } = await tokenAContract.call("balanceOf", {
     account: account.address,
   });
@@ -165,21 +173,17 @@ export async function getTokenBalances(account: OpenZeppelinAccount, [tokenACont
   });
   return {
     balanceTokenA: uint256ToBN(balanceTokenA).toString(),
-    balanceTokenB: uint256ToBN(balanceTokenB).toString()
+    balanceTokenB: uint256ToBN(balanceTokenB).toString(),
   };
 }
 
 export function isEqualInRange(x: JSBI, y: JSBI, range = JSBI.BigInt(10)) {
   if (JSBI.equal(x, y)) {
-    return true
+    return true;
   }
 
-  const [max, min] = JSBI.greaterThan(x, y) ? [x, y] : [y, x]
-  const diff = JSBI.subtract(max, min)
+  const [max, min] = JSBI.greaterThan(x, y) ? [x, y] : [y, x];
+  const diff = JSBI.subtract(max, min);
 
-  if (JSBI.lessThanOrEqual(diff, range)) {
-    return true
-  }
-
-  return false
+  return JSBI.lessThanOrEqual(diff, range);
 }
