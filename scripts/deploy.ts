@@ -1,3 +1,7 @@
+import {
+  DeclareOptions,
+  DeployOptions,
+} from "@shardlabs/starknet-hardhat-plugin/dist/src/types";
 import hardhat, { starknet } from "hardhat";
 import { stringToFelt } from "../test/util";
 
@@ -10,6 +14,9 @@ async function main() {
       "contracts/l0k_router.cairo",
     ],
   });
+
+  const starknetToken = process.env["STARKNET_TOKEN"] || "";
+  const options: DeclareOptions | DeployOptions = { token: starknetToken };
 
   const feeToSetter = process.env["FEE_TO_SETTER"] || 0;
   console.log("feeToSetter:", feeToSetter);
@@ -25,33 +32,48 @@ async function main() {
     "l0k_router"
   );
 
-  // Deploy tokenA
-  const tokenAContract = await l0kErc20ContractFactory.deploy({
-    name: stringToFelt("10K Swap A"),
-    symbol: stringToFelt("TKA"),
-  });
-  console.log("tokenAContract:", tokenAContract.address);
+  // Dnot deploy tokens on alphaMainnet
+  if (hardhat.config.starknet.network != "alphaMainnet") {
+    // Deploy tokenA
+    const tokenAContract = await l0kErc20ContractFactory.deploy(
+      {
+        name: stringToFelt("10K Swap A"),
+        symbol: stringToFelt("TKA"),
+      },
+      options
+    );
+    console.log("tokenAContract:", tokenAContract.address);
 
-  // Deploy tokenB
-  const tokenBContract = await l0kErc20ContractFactory.deploy({
-    name: stringToFelt("10K Swap B"),
-    symbol: stringToFelt("TKB"),
-  });
-  console.log("tokenBContract:", tokenBContract.address);
+    // Deploy tokenB
+    const tokenBContract = await l0kErc20ContractFactory.deploy(
+      {
+        name: stringToFelt("10K Swap B"),
+        symbol: stringToFelt("TKB"),
+      },
+      options
+    );
+    console.log("tokenBContract:", tokenBContract.address);
+  }
 
-  const pairContractClassHash = await l0kPairContractFactory.declare();
+  const pairContractClassHash = await l0kPairContractFactory.declare(options);
   console.log("pairContractClassHash: ", pairContractClassHash);
 
-  const l0kFactoryContract = await l0kFactoryContractFactory.deploy({
-    pairClass: pairContractClassHash,
-    feeToSetter,
-  });
+  const l0kFactoryContract = await l0kFactoryContractFactory.deploy(
+    {
+      pairClass: pairContractClassHash,
+      feeToSetter,
+    },
+    options
+  );
   console.log("l0kFactoryContract:", l0kFactoryContract.address);
 
-  const l0kRouterContract = await l0kRouterContractFactory.deploy({
-    factory: l0kFactoryContract.address,
-    pairClass: pairContractClassHash,
-  });
+  const l0kRouterContract = await l0kRouterContractFactory.deploy(
+    {
+      factory: l0kFactoryContract.address,
+      pairClass: pairContractClassHash,
+    },
+    options
+  );
   console.log("l0kRouterContract:", l0kRouterContract.address);
 }
 
