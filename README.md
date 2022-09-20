@@ -1,19 +1,24 @@
 # 10Kswap Contracts for Cairo
 
-**A decentralized ZK Rollup AMM** written in Cairo for [StarkNet](https://starkware.co/product/starknet/).<br/>
-10Kswap is actively exploring the updated user experience of ZK technology application on AMM(Including but not limited to lower gas fees, higher TPS).<br/>
-Using the 10kswap AMM contract, token holder can freely create currency pairs without paying high fees.
+Introducing 10KSwap: An AMM protocol that advances with Ethereum<br/>
 
-Cairo-VM provides a new development option for the community, it can provide faster TPS, and its computing cost is almost negligible, we believe that AMM will be the most direct beneficiary of these two features. In the previous period, we overcame the difficulties faced by many early developers and implemented the first version to make it run stably. Next, we will explore the potential of zk-tech and develop an AMM that is more friendly to market makers and can control the distribution of liquidity more finely. The key technology is how to use Cairo to develop a "Rich Convex Function". If we are successful, it will bring great inspiration and reference to the zk community, allowing more Dapp developers to participate in the ecological construction.
+10KSwap(10kswap.com), being built on StarkNet, is an AMM protocol that advances with Ethereum. 10K aims to revolutionize the performance of the AMM protocol by leveraging the rollup feature, bringing lower fees, less friction, and ultimately better liquidity to the L2 world and advance DeFi adoption.
 
-In Cairo-VM, the gas consumption required to perform calculations is much lower than the state update (zk-rollup technical feature). Based on this feature, we will continue to optimize the contract (increase the appropriate amount of calculation to reduce the amount of state update), and further reduce gas fee.
+10KSwap is the first open source AMM deployed on StarkNet Mainnet. We trust Ethereum and StarkNet, which represents the most advanced rollup trend. With its unique Cairo-VM giving developers a new development option, higher TPS and a computational cost that can be ignored. We believe AMM will be the most direct beneficiary of these two features.
 
-At the same time, our development process is open source, and all processes can be used as reference materials. During this process, we will also timely organize two products that are useful to the community.<br />
+With Cairo-VM, the gas cost required to perform calculation is much lower than for state updates, and on top of this we will increase the appropriate amount of calculation to reduce the number of state updates, continue to improve contract performance, and further reduce gas costs. Ensuring that 10K brings users a lightning-fast trading experience while enjoying the security of broad consensus - that's what every DeFi user wants to see, and we look forward to exploring this magical starfield with the pioneers on StarkNet.
+
+10KSwap has adopted an immutable scheme where the protocol does not serve centralized interests. When it is fully delivered by the creator, the power is left to the community. It is a reflection of the spirit of decentralization, and our desire to work with users to make the impossible triangle possible.
+
+In subsequent developments, we will continue to explore the potential of zk-tech to develop an AMM that is more LP friendly and allows for finer control of liquidity distribution.
+
+The key technology is how to use Cairo to develop the "Rich Convex Function", and we will bring the results to the community. All the development process is open source and available as reference material, hoping to motivate more Dapp developers to inspire them to get involved in the L2 ecosystem and build DeFi. The following three products will be brought to the community.
+
 1). A summary tutorial related to development.<br />
-2). A more general and convenient development scaffold.<br />
-3). Provide sdk and defi contract library to facilitate dapp development.<br />
+2). A more generic and accessible development scaffolding.<br />
+3). SDK and DeFi contract libraries to facilitate dapp development.<br />
 
-## 10Kswap is on the testnet. To preview
+## 10Kswap was online. To preview
 
 [`https://10kswap.com`](https://10kswap.com)
 
@@ -57,7 +62,7 @@ npx hardhat test l0k_factory.test.ts
 
 [`l0k_factory.cairo`](./contracts/l0k_factory.cairo)
 
-- Mainnet Adddress: `-`
+- Mainnet Adddress: `0x01c0a36e26a8f822e0d81f20a5a562b16a8f8a3dfd99801367dd2aea8f1a87a2`
 - Goerli Adddress: `0x06c31f39524388c982045988de3788530605ed08b10389def2e7b1dd09d19308`
 
 #### Events
@@ -383,7 +388,7 @@ end
 
 [`l0k_router.cairo`](./contracts/l0k_router.cairo)
 
-- Mainnet Adddress: `-`
+- Mainnet Adddress: `0x07a6f98c03379b9513ca84cca1373ff452a7462a3b61598f0af5bb27ad7f76d1`
 - Goerli Adddress: `0x00975910cd99bc56bd289eaaa5cee6cd557f0ddafdb2ce6ebea15b158eb2c664`
 
 #### Read Functions
