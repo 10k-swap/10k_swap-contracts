@@ -2,6 +2,7 @@ node_modules
 .vscode
 .env
 yarn-error.log
+.yarn
 
 #Hardhat files
 cache
