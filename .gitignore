@@ -1,8 +1,6 @@
 node_modules
 .vscode
 .env
-yarn-error.log
-.yarn
 
 #Hardhat files
 cache
@@ -14,12 +12,3 @@ __pycache__
 
 #Starknet plugin
 starknet-artifacts
-
-# OSX
-.DS_Store
-
-# venv
-cairo_venv
-
-# No package-lock.json. Use yarn.lock
-package-lock.json

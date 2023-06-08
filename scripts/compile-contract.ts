@@ -2,7 +2,9 @@ import hardhat from "hardhat";
 
 async function main() {
     await hardhat.run("starknet-compile", {
-        paths: ["contracts/contract.cairo"]
+        paths: ["contracts/contract.cairo"],
+        allowedLibfuncsListName: "experimental_v0.1.0",
+        addPythonicHints: true
     });
 }
 
