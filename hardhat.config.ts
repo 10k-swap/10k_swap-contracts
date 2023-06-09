@@ -1,7 +1,7 @@
-import { HardhatUserConfig } from "hardhat/types";
-import "@shardlabs/starknet-hardhat-plugin";
 import "@nomiclabs/hardhat-ethers";
+import "@shardlabs/starknet-hardhat-plugin";
 import * as dotenv from "dotenv";
+import { HardhatUserConfig } from "hardhat/types";
 dotenv.config();
 
 /**
@@ -10,7 +10,7 @@ dotenv.config();
 const config: HardhatUserConfig = {
     solidity: "0.6.12",
     starknet: {
-        dockerizedVersion: "0.11.0.2", // alternatively choose one of the two venv options below
+        dockerizedVersion: "0.11.1", // alternatively choose one of the two venv options below
         // uses (my-venv) defined by `python -m venv path/to/my-venv`
         // venv: "path/to/my-venv",
 
@@ -19,7 +19,7 @@ const config: HardhatUserConfig = {
         recompile: false,
 
         // the directory containing Cairo 1 compiler binaries
-        // cairo1BinDir: "path/to/to/compiler/target/release",
+        // cairo1BinDir: path.resolve(__dirname, "cairo/target/release"),
         network: "integrated-devnet",
         wallets: {
             OpenZeppelin: {

@@ -1,6 +1,8 @@
 node_modules
-.vscode
 .env
+
+.vscode/*
+!.vscode/settings.json
 
 #Hardhat files
 cache
